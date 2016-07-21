@@ -4,12 +4,12 @@ var yargs = require('yargs');
 var args = yargs.argv;
 
 if (!args.uconfig || !fs.existsSync(args.uconfig)) {
-	console.log("Please specify a users --uconfig file to use in the command line. Eg --uconfig=\"../users/example-config.json\" ");
+	console.log("Please specify a users --uconfig file to use in the command line. Eg --uconfig=\"../../users/example-config.json\" ");
 	process.exit();
 }
 
 if (!args.apiUrl) {
-	console.log("Please specify a valid --apiUrl file to use in the command line. Eg --apiUrl=\"http://animate.webinate-test.net\"");
+	console.log("Please specify a valid --apiUrl file to use in the command line. Eg --apiUrl=\"http://animate.webinate.dev\"");
 	process.exit();
 }
 
