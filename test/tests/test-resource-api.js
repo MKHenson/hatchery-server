@@ -59,7 +59,7 @@
           if (err)
             return done(err);
 
-          test.string(res.body.message).is("You do not have permission")
+          test.string(res.body.message).is("You don't have permission to make this request")
           test.bool(res.body.error).isTrue()
           done(err);
         });
@@ -74,7 +74,7 @@
           if (err)
             return done(err);
 
-          test.string(res.body.message).is("You do not have permission")
+          test.string(res.body.message).is("You don't have permission to make this request")
           test.bool(res.body.error).isTrue()
           done(err);
         });
@@ -185,7 +185,7 @@
           if (err)
             return done(err);
 
-          test.string(res.body.message).is("You do not have permission")
+          test.string(res.body.message).is("You don't have permission to make this request")
           test.bool(res.body.error).isTrue()
           done(err);
         });
