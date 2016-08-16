@@ -74,7 +74,7 @@ declare module Engine
         name?: string;
         description?: string;
         image?: string;
-        category?: string;
+        category?: number;
         subCategory?: string;
         public?: boolean;
         curFile?: string;
@@ -93,9 +93,9 @@ declare module Engine
         files?: Array<string>;
         createdOn?: number;
         lastModified?: number;
-        _id?: any;  
+        _id?: any;
     }
-    
+
     /**
     * An interface that is used to describe the user's engine details
     */
@@ -134,7 +134,7 @@ declare module Engine
         lastModified?: number;
     }
 
-  
+
 
     /**
     * An interface that is used to describe users files
