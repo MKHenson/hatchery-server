@@ -21,8 +21,8 @@ export class FileController extends EngineController
         this.router.get("/users/:user/projects/:project/files", <any>[modepress.canEdit, this.getByProject.bind(this)]);
         this.router.get("/users/:user/files", <any>[modepress.canEdit, this.getByUser.bind(this)]);
 
-        modepress.EventManager.singleton.on("FilesUploaded", this.onFilesUploaded.bind(this));
-        modepress.EventManager.singleton.on("FilesRemoved", this.onFilesRemoved.bind(this));
+        modepress.EventManager.singleton.on("FilesUploaded" as UsersInterface.SocketTokens.ClientInstructionType, this.onFilesUploaded.bind(this));
+        modepress.EventManager.singleton.on("FilesRemoved" as UsersInterface.SocketTokens.ClientInstructionType, this.onFilesRemoved.bind(this));
     }
 
     /**
@@ -201,12 +201,12 @@ export class FileController extends EngineController
 
     /**
     * Called whenever a user has uploaded files
-    * @param {UsersInterface.SocketEvents.IFileEvent} event
+    * @param {UsersInterface.SocketTokens.IFileToken} token
     */
-    private onFilesUploaded(event: UsersInterface.SocketEvents.IFileAddedEvent)
+    private onFilesUploaded(token: UsersInterface.SocketTokens.IFileToken)
     {
         var model = this.getModel("en-files");
-        var file = event.file;
+        var file = token.file;
         var promises: Array<Promise<modepress.ModelInstance<Engine.IFile>>> = [];
 
 
@@ -239,13 +239,13 @@ export class FileController extends EngineController
 
     /**
     * Called whenever a user has uploaded files
-    * @param {UsersInterface.SocketEvents.IFileEvent} event
+    * @param {UsersInterface.SocketTokens.IFileToken} token
     */
-    private onFilesRemoved(event: UsersInterface.SocketEvents.IFileRemovedEvent)
+    private onFilesRemoved(token: UsersInterface.SocketTokens.IFileToken)
     {
         var model = this.getModel("en-files");
 
-        model.deleteInstances( <Engine.IFile>{ identifier: event.file.identifier }).then(function (numRemoved: number)
+        model.deleteInstances( <Engine.IFile>{ identifier: token.file.identifier }).then(function (numRemoved: number)
         {
             winston.info(`[${numRemoved}] Files have been removed`, { process: process.pid });
 

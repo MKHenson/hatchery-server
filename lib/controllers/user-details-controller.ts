@@ -29,24 +29,24 @@ export class UserDetailsController extends EngineController
         this.router.post("/user-details/:target", <any>[modepress.isAdmin, this.createDetails.bind(this)]);
         this.router.put("/user-details/:user", <any>[modepress.canEdit, this.updateDetails.bind(this)]);
 
-        modepress.EventManager.singleton.on("Activated", this.onActivated.bind(this));
-        modepress.EventManager.singleton.on("Removed", this.onRemoved.bind(this));
+        modepress.EventManager.singleton.on("Activated" as UsersInterface.SocketTokens.ClientInstructionType, this.onActivated.bind(this));
+        modepress.EventManager.singleton.on("Removed" as UsersInterface.SocketTokens.ClientInstructionType, this.onRemoved.bind(this));
     }
 
     /**
     * Called whenever a user has had their account removed
-    * @param {UserEvent} event
+    * @param {UsersInterface.SocketTokens.IUserToken} token
     */
-    private onRemoved(event: modepress.UserEvent)
+    private onRemoved(token: UsersInterface.SocketTokens.IUserToken)
     {
         var model = this.getModel("en-user-details");
-        model.deleteInstances(<Engine.IUserMeta>{ user: event.username }).then(function ()
+        model.deleteInstances(<Engine.IUserMeta>{ user: token.username }).then(function ()
         {
-            winston.info(`User details for ${event.username} have been deleted`, { process: process.pid });
+            winston.info(`User details for ${token.username} have been deleted`, { process: process.pid });
 
         }).catch(function (err: Error)
         {
-            winston.error(`An error occurred while deleteing user details for ${event.username} : ${err.message}`, { process: process.pid });
+            winston.error(`An error occurred while deleteing user details for ${token.username} : ${err.message}`, { process: process.pid });
         });
     }
 
@@ -93,18 +93,18 @@ export class UserDetailsController extends EngineController
 
     /**
     * Called whenever a user has activated their account. We setup their app engine specific details
-    * @param {UserEvent} event
+    * @param {UsersInterface.SocketTokens.IUserToken} token
     */
-    private onActivated(event: modepress.UserEvent)
+    private onActivated(token: UsersInterface.SocketTokens.IUserToken)
     {
         var model = this.getModel("en-user-details");
-        model.createInstance(<Engine.IUserMeta>{ user: event.username }).then(function (instance)
+        model.createInstance(<Engine.IUserMeta>{ user: token.username }).then(function (instance)
         {
-            winston.info(`Created user details for ${event.username}`, { process: process.pid });
+            winston.info(`Created user details for ${token.username}`, { process: process.pid });
 
         }).catch(function (err: Error)
         {
-            winston.error(`An error occurred while creating creating user details for ${event.username} : ${err.message}`, { process: process.pid });
+            winston.error(`An error occurred while creating creating user details for ${token.username} : ${err.message}`, { process: process.pid });
         });
     }
 
