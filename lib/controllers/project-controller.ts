@@ -34,16 +34,16 @@ export class ProjectController extends EngineController
         this.router.put("/users/:user/projects/:project", <any>[modepress.canEdit, canAdmin, this.updateProject.bind(this)]);
         this.router.delete("/users/:user/projects/:projects", <any>[modepress.canEdit, this.remove.bind(this)]);
 
-        modepress.EventManager.singleton.on("Removed", this.onUserRemoved.bind(this));
+        modepress.EventManager.singleton.on("Removed" as UsersInterface.SocketTokens.ClientInstructionType, this.onUserRemoved.bind(this));
     }
 
     /**
     * Called whenever a user has had their account removed
-    * @param {UserEvent} event
+    * @param {UsersInterface.SocketTokens.IUserToken} token
     */
-    private onUserRemoved(event: modepress.UserEvent)
+    private onUserRemoved(token: UsersInterface.SocketTokens.IUserToken)
     {
-        this.removeByUser(event.username );
+        this.removeByUser(token.username );
     }
 
     /**
