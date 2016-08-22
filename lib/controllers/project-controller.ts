@@ -34,7 +34,8 @@ export class ProjectController extends EngineController
         this.router.put("/users/:user/projects/:project", <any>[modepress.canEdit, canAdmin, this.updateProject.bind(this)]);
         this.router.delete("/users/:user/projects/:projects", <any>[modepress.canEdit, this.remove.bind(this)]);
 
-        modepress.EventManager.singleton.on("Removed" as UsersInterface.SocketTokens.ClientInstructionType, this.onUserRemoved.bind(this));
+        let userRemoved : UsersInterface.SocketTokens.ClientInstructionType = 'Removed';
+        modepress.EventManager.singleton.on(userRemoved, this.onUserRemoved.bind(this));
     }
 
     /**

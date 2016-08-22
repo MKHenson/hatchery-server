@@ -29,8 +29,10 @@ export class UserDetailsController extends EngineController
         this.router.post("/user-details/:target", <any>[modepress.isAdmin, this.createDetails.bind(this)]);
         this.router.put("/user-details/:user", <any>[modepress.canEdit, this.updateDetails.bind(this)]);
 
-        modepress.EventManager.singleton.on("Activated" as UsersInterface.SocketTokens.ClientInstructionType, this.onActivated.bind(this));
-        modepress.EventManager.singleton.on("Removed" as UsersInterface.SocketTokens.ClientInstructionType, this.onRemoved.bind(this));
+        let userActivated : UsersInterface.SocketTokens.ClientInstructionType = 'Activated';
+        let userRemoved : UsersInterface.SocketTokens.ClientInstructionType = 'Removed';
+        modepress.EventManager.singleton.on(userActivated, this.onActivated.bind(this));
+        modepress.EventManager.singleton.on(userRemoved, this.onRemoved.bind(this));
     }
 
     /**

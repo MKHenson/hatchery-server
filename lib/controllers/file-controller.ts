@@ -21,8 +21,10 @@ export class FileController extends EngineController
         this.router.get("/users/:user/projects/:project/files", <any>[modepress.canEdit, this.getByProject.bind(this)]);
         this.router.get("/users/:user/files", <any>[modepress.canEdit, this.getByUser.bind(this)]);
 
-        modepress.EventManager.singleton.on("FilesUploaded" as UsersInterface.SocketTokens.ClientInstructionType, this.onFilesUploaded.bind(this));
-        modepress.EventManager.singleton.on("FilesRemoved" as UsersInterface.SocketTokens.ClientInstructionType, this.onFilesRemoved.bind(this));
+        let fileUploadedEvent : UsersInterface.SocketTokens.ClientInstructionType = 'FileUploaded';
+        let fileRemovedEvent : UsersInterface.SocketTokens.ClientInstructionType = 'FileRemoved';
+        modepress.EventManager.singleton.on(fileUploadedEvent, this.onFilesUploaded.bind(this));
+        modepress.EventManager.singleton.on(fileRemovedEvent, this.onFilesRemoved.bind(this));
     }
 
     /**
