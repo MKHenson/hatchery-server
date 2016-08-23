@@ -103,7 +103,7 @@ declare module Engine
     {
         user?: string;
         bio?: string;
-        image?: any;
+        image?: string;
         plan?: number;
         website?: string;
         customerId?: string;
