@@ -134,6 +134,10 @@ export class FileController extends EngineController
         if (params.favourite && params.favourite.toLowerCase() == "true")
             query.favourite = true;
 
+        // Check for global
+        if (params.global && params.global.toLowerCase() == "true")
+            query.global = true;
+
         // Check for bucket ID
         if (params.bucket)
             query.bucketName = params.bucket;
