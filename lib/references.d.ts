@@ -14,6 +14,7 @@
 /// <reference path="./definitions/required/formidable.d.ts" />
 /// <reference path="./definitions/required/users.d.ts" />
 /// <reference path="./definitions/required/modepress-api.d.ts" />
+/// <reference path="./definitions/required/hatchery-runtime.d.ts" />
 
 /// <reference path="./definitions/custom/app-engine.d.ts" />
 /// <reference path="./definitions/custom/modepress-api.d.ts" />
