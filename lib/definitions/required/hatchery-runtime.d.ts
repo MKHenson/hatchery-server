@@ -36,7 +36,7 @@ declare namespace HatcheryRuntime {
     /**
      * Describes the item type
      */
-    export type ItemType = 'behaviour' | 'link' | 'asset' | 'shortcut' | 'portal' | 'script' | 'comment' | 'instance';
+    export type ItemType = 'behaviour' | 'link' | 'asset' | 'portal' | 'script' | 'instance';
 
     /**
      * Describes the types of objects we can interact with from a scene
@@ -52,8 +52,6 @@ declare namespace HatcheryRuntime {
         custom: boolean;
         valueType: DataType;
         value: any;
-        left?: number;
-        top?: number;
     }
 
     /**
@@ -62,8 +60,6 @@ declare namespace HatcheryRuntime {
     export interface ICanvasItem {
         id?: number;
         type?: ItemType;
-        left?: number;
-        top?: number;
     }
 
     /**
@@ -87,27 +83,10 @@ declare namespace HatcheryRuntime {
     }
 
     /**
-     * A basic wrapper for a Comment interface
-     */
-    export interface IComment extends ICanvasItem {
-        label: string;
-        width : number;
-        height : number;
-    }
-
-    /**
      * A basic wrapper for a BehaviourPortal interface
      */
     export interface IBehaviourPortal extends IBehaviour {
         portal: IPortal;
-    }
-
-    /**
-     * A basic wrapper for a BehaviourComment interface
-     */
-    export interface IBehaviourComment extends IBehaviour {
-        width: number;
-        height: number;
     }
 
     /**
