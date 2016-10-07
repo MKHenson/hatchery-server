@@ -2,7 +2,6 @@ import * as mongodb from "mongodb";
 import * as express from "express";
 import * as modepress from "modepress-api";
 import {PluginModel} from "../models/plugin-model";
-import {IPlugin} from "engine";
 import * as winston from "winston";
 import {EngineController} from "./engine-controller";
 
@@ -38,7 +37,7 @@ export class PluginController extends EngineController
         res.setHeader('Content-Type', 'application/json');
         var plugins = this.getModel("en-plugins");
 
-        plugins.deleteInstances(<IPlugin>{ _id: new mongodb.ObjectID(req.params.id) }).then(function (numRemoved)
+        plugins.deleteInstances(<HatcheryServer.IPlugin>{ _id: new mongodb.ObjectID(req.params.id) }).then(function (numRemoved)
         {
             if (numRemoved == 0)
                 return Promise.reject(new Error("Could not find a plugin with that ID"));
@@ -69,8 +68,8 @@ export class PluginController extends EngineController
         res.setHeader('Content-Type', 'application/json');
         var model = this.getModel("en-plugins");
         var that = this;
-        var pluginToken = <IPlugin>req.body;
-        model.update<IPlugin>(<IPlugin>{ _id: new mongodb.ObjectID(req.params.id) }, pluginToken).then(function (data)
+        var pluginToken = <HatcheryServer.IPlugin>req.body;
+        model.update<HatcheryServer.IPlugin>(<HatcheryServer.IPlugin>{ _id: new mongodb.ObjectID(req.params.id) }, pluginToken).then(function (data)
         {
             res.end(JSON.stringify(<modepress.IResponse>{
                 error: false,
@@ -98,7 +97,7 @@ export class PluginController extends EngineController
         res.setHeader('Content-Type', 'application/json');
         var model = this.getModel("en-plugins");
         var that = this;
-        var pluginToken = <IPlugin>req.body;
+        var pluginToken = <HatcheryServer.IPlugin>req.body;
 
         pluginToken.author = req._user.username;
 
@@ -138,7 +137,7 @@ export class PluginController extends EngineController
         var that = this;
         var count = 0;
 
-        var findToken: IPlugin = {};
+        var findToken: HatcheryServer.IPlugin = {};
 
         if (!req._isAdmin)
             findToken.isPublic = true;
@@ -158,13 +157,13 @@ export class PluginController extends EngineController
 
         // Check for keywords
         if (req.query.search)
-            (<IPlugin>findToken).name = <any>new RegExp(req.query.search, "i");
+            (<HatcheryServer.IPlugin>findToken).name = <any>new RegExp(req.query.search, "i");
 
         // First get the count
         model.count(findToken).then(function (num)
         {
             count = num;
-            return model.findInstances<IPlugin>(findToken, [], parseInt(req.query.index), parseInt(req.query.limit), (getContent == false ? { html: 0 } : undefined));
+            return model.findInstances<HatcheryServer.IPlugin>(findToken, [], parseInt(req.query.index), parseInt(req.query.limit), (getContent == false ? { html: 0 } : undefined));
 
         }).then(function (instances)
         {

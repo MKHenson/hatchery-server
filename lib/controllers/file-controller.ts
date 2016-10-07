@@ -2,7 +2,6 @@
 import * as express from "express";
 import * as modepress from "modepress-api";
 import {UserDetailsModel} from "../models/user-details-model";
-import {IProject} from "engine";
 import * as winston from "winston";
 import {FileModel} from "../models/file-model";
 import * as request from "request"
@@ -43,8 +42,8 @@ export class FileController extends EngineController
         if (!modepress.isValidID(req.params.id))
             return res.end(JSON.stringify(<modepress.IResponse>{ error: true, message: "Please use a valid resource ID" }));
 
-        var searchToken: Engine.IFile = { _id: new mongodb.ObjectID(req.params.id) };
-        var token: Engine.IResource = req.body;
+        var searchToken: HatcheryServer.IFile = { _id: new mongodb.ObjectID(req.params.id) };
+        var token: HatcheryServer.IResource = req.body;
 
         model.update(searchToken, token).then(function (instance)
         {
@@ -88,11 +87,11 @@ export class FileController extends EngineController
             model.count(query).then(function (num)
             {
                 count = num;
-                return model.findInstances<Engine.IFile>(query, [], index, limit);
+                return model.findInstances<HatcheryServer.IFile>(query, [], index, limit);
 
             }).then(function (instances)
             {
-                var sanitizedData : Array<Engine.IFile> = [];
+                var sanitizedData : Array<HatcheryServer.IFile> = [];
                 for (var i = 0, l = instances.length; i < l; i++)
                     sanitizedData.push(instances[i].schema.getAsJson(instances[i]._id, {verbose: verbose}));
 
@@ -116,10 +115,10 @@ export class FileController extends EngineController
 
     /**
     * Checks for and adds any optional file queries
-    * @param {Engine.IFile} query
+    * @param {HatcheryServer.IFile} query
     * @param {any} params
     */
-    private appendOptionalQueries(query: Engine.IFile, params: any)
+    private appendOptionalQueries(query: HatcheryServer.IFile, params: any)
     {
         // Check for keywords
         if (params.search)
@@ -160,7 +159,7 @@ export class FileController extends EngineController
             return res.end(JSON.stringify(<modepress.IResponse>{ error: true, message: "Please use a valid project ID" }));
 
         // Create the query
-        var query: Engine.IFile = { projectId: new mongodb.ObjectID(project), user: req._user.username, browsable : true };
+        var query: HatcheryServer.IFile = { projectId: new mongodb.ObjectID(project), user: req._user.username, browsable : true };
         this.appendOptionalQueries(query, req.query);
 
         this.getFiles(query, parseInt(req.query.index), parseInt(req.query.limit)).then(function (data)
@@ -188,7 +187,7 @@ export class FileController extends EngineController
         res.setHeader('Content-Type', 'application/json');
 
         // Create the query
-        var query: Engine.IFile = { user: req._user.username, browsable: true };
+        var query: HatcheryServer.IFile = { user: req._user.username, browsable: true };
         this.appendOptionalQueries(query, req.query);
 
         this.getFiles(query, parseInt(req.query.index), parseInt(req.query.limit)).then(function (data)
@@ -213,14 +212,14 @@ export class FileController extends EngineController
     {
         var model = this.getModel("en-files");
         var file = token.file;
-        var promises: Array<Promise<modepress.ModelInstance<Engine.IFile>>> = [];
+        var promises: Array<Promise<modepress.ModelInstance<HatcheryServer.IFile>>> = [];
 
 
         // Add an IFile reference for each file thats added
         // Check for file meta
-        var fileMeta: Engine.IFileMeta = file.meta;
+        var fileMeta: HatcheryServer.IFileMeta = file.meta;
 
-        promises.push(model.createInstance<Engine.IFile>(<Engine.IFile>{
+        promises.push(model.createInstance<HatcheryServer.IFile>(<HatcheryServer.IFile>{
             bucketId: file.bucketId,
             bucketName: file.bucketName,
             user: file.user,
@@ -251,7 +250,7 @@ export class FileController extends EngineController
     {
         var model = this.getModel("en-files");
 
-        model.deleteInstances( <Engine.IFile>{ identifier: token.file.identifier }).then(function (numRemoved: number)
+        model.deleteInstances( <HatcheryServer.IFile>{ identifier: token.file.identifier }).then(function (numRemoved: number)
         {
             winston.info(`[${numRemoved}] Files have been removed`, { process: process.pid });
 

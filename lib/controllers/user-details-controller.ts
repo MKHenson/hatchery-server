@@ -2,7 +2,6 @@ import * as mongodb from "mongodb";
 import * as express from "express";
 import * as modepress from "modepress-api";
 import {UserDetailsModel} from "../models/user-details-model";
-import {IProject} from "engine";
 import * as winston from "winston";
 import {EngineController} from "./engine-controller";
 
@@ -42,7 +41,7 @@ export class UserDetailsController extends EngineController
     private onRemoved(token: UsersInterface.SocketTokens.IUserToken)
     {
         var model = this.getModel("en-user-details");
-        model.deleteInstances(<Engine.IUserMeta>{ user: token.username }).then(function ()
+        model.deleteInstances(<HatcheryServer.IUserMeta>{ user: token.username }).then(function ()
         {
             winston.info(`User details for ${token.username} have been deleted`, { process: process.pid });
 
@@ -64,8 +63,8 @@ export class UserDetailsController extends EngineController
         var model = this.getModel("en-user-details");
         var that = this;
         var user: string = req.params.user;
-        var updateToken: Engine.IUserMeta = { user: user };
-        var token: Engine.IUserMeta = req.body;
+        var updateToken: HatcheryServer.IUserMeta = { user: user };
+        var token: HatcheryServer.IUserMeta = req.body;
 
         model.update(updateToken, token).then(function (instance)
         {
@@ -100,7 +99,7 @@ export class UserDetailsController extends EngineController
     private onActivated(token: UsersInterface.SocketTokens.IUserToken)
     {
         var model = this.getModel("en-user-details");
-        model.createInstance(<Engine.IUserMeta>{ user: token.username }).then(function (instance)
+        model.createInstance(<HatcheryServer.IUserMeta>{ user: token.username }).then(function (instance)
         {
             winston.info(`Created user details for ${token.username}`, { process: process.pid });
 
@@ -124,7 +123,7 @@ export class UserDetailsController extends EngineController
         var model = that.getModel("en-user-details");
         var target = req.params.user;
 
-        model.findOne<Engine.IUserMeta>(<Engine.IUserMeta>{ user: target }).then(function(instance) : Promise<Error|Promise<Engine.IUserMeta>>
+        model.findOne<HatcheryServer.IUserMeta>(<HatcheryServer.IUserMeta>{ user: target }).then(function(instance) : Promise<Error|Promise<HatcheryServer.IUserMeta>>
         {
             if (!instance)
                 return Promise.reject<Error>(new Error("User does not exist"));
@@ -172,7 +171,7 @@ export class UserDetailsController extends EngineController
             var model = that.getModel("en-user-details");
 
             // User exists and is ok - so lets create their details
-            model.createInstance(<Engine.IUserMeta>{ user: user.username }).then(function (instance)
+            model.createInstance(<HatcheryServer.IUserMeta>{ user: user.username }).then(function (instance)
             {
                 return res.end(JSON.stringify(<modepress.IResponse>{
                     error: false,

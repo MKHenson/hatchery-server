@@ -4,7 +4,6 @@ import * as bodyParser from "body-parser";
 import * as modepress from "modepress-api";
 import {UserDetailsModel} from "../models/user-details-model";
 import {ProjectModel} from "../models/project-model";
-import {IProject} from "engine";
 
 /**
 * A controller that deals with project models
@@ -206,7 +205,7 @@ export class PermissionController extends modepress.Controller
             if (req._user.privileges < 3)
                 return resolve(true);
 
-            projectModel.count( <Engine.IProject>{ _id : new mongodb.ObjectID(project), user: user }).then(function(count)
+            projectModel.count( <HatcheryServer.IProject>{ _id : new mongodb.ObjectID(project), user: user }).then(function(count)
             {
                 if (count == 0)
                     throw new Error("No project exists with that ID");
@@ -247,7 +246,7 @@ export class PermissionController extends modepress.Controller
             var username = user.username;
             var maxProjects = 0;
 
-            userModel.findOne<Engine.IUserMeta>(<Engine.IUserMeta>{ user: username }).then(function (instance) : Promise<Error|number>
+            userModel.findOne<HatcheryServer.IUserMeta>(<HatcheryServer.IUserMeta>{ user: username }).then(function (instance) : Promise<Error|number>
             {
                 if (!instance)
                     return Promise.reject<Error>(new Error("Not found"));
@@ -255,7 +254,7 @@ export class PermissionController extends modepress.Controller
                 maxProjects = instance.dbEntry.maxProjects;
 
                 // get number of projects
-                return projModel.count(<Engine.IProject>{ user: username });
+                return projModel.count(<HatcheryServer.IProject>{ user: username });
 
             }).then(function (numProjects)
             {

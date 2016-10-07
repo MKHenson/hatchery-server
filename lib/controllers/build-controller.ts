@@ -2,7 +2,6 @@
 import * as express from "express";
 import * as modepress from "modepress-api";
 import {BuildModel} from "../models/build-model";
-import {IProject} from "engine";
 import * as winston from "winston";
 import {EngineController} from "./engine-controller";
 
@@ -48,7 +47,7 @@ export class BuildController extends EngineController
         if (!modepress.isValidID(project))
             return res.end(JSON.stringify(<modepress.IResponse>{ error: true, message: `Please use a valid project ID` }));
 
-        var findToken: Engine.IBuild = { user: target, projectId: new mongodb.ObjectID(project) };
+        var findToken: HatcheryServer.IBuild = { user: target, projectId: new mongodb.ObjectID(project) };
 
         if (req.params.id && modepress.isValidID(req.params.id))
             findToken._id = new mongodb.ObjectID(req.params.id);
@@ -56,7 +55,7 @@ export class BuildController extends EngineController
         model.count(findToken).then(function(total)
         {
             totalMatches = total;
-            return model.findInstances<Engine.IBuild>(findToken, [], parseInt(req.query.index), parseInt(req.query.limit));
+            return model.findInstances<HatcheryServer.IBuild>(findToken, [], parseInt(req.query.index), parseInt(req.query.limit));
 
         }).then(function (instances)
         {
@@ -87,16 +86,16 @@ export class BuildController extends EngineController
 
     /**
     * Creates a new build
-    * @returns {Promise<Modepress.ModelInstance<Engine.IBuild>>}
+    * @returns {Promise<Modepress.ModelInstance<HatcheryServer.IBuild>>}
     */
-    createBuild(username: string, project?: mongodb.ObjectID): Promise<Modepress.ModelInstance<Engine.IBuild>>
+    createBuild(username: string, project?: mongodb.ObjectID): Promise<Modepress.ModelInstance<HatcheryServer.IBuild>>
     {
         var that = this;
         var model = that.getModel("en-builds");
 
-        return new Promise<Modepress.ModelInstance<Engine.IBuild>>(function (resolve, reject)
+        return new Promise<Modepress.ModelInstance<HatcheryServer.IBuild>>(function (resolve, reject)
         {
-            model.createInstance(<Engine.IBuild>{ name: '', user: username, projectId : project }).then(function (instance)
+            model.createInstance(<HatcheryServer.IBuild>{ name: '', user: username, projectId : project }).then(function (instance)
             {
                 return resolve(instance);
 
@@ -119,8 +118,8 @@ export class BuildController extends EngineController
         var that = this;
         var model = that.getModel("en-builds");
 
-        var findToken: Engine.IBuild = { user: user };
-        var $or: Array<Engine.IBuild> = [];
+        var findToken: HatcheryServer.IBuild = { user: user };
+        var $or: Array<HatcheryServer.IBuild> = [];
         for (var i = 0, l = ids.length; i < l; i++)
             $or.push({ _id: new mongodb.ObjectID(ids[i]) });
 
@@ -153,7 +152,7 @@ export class BuildController extends EngineController
 
         return new Promise<number>(function (resolve, reject)
         {
-            model.deleteInstances(<Engine.IBuild>{ user: user }).then(function (instance)
+            model.deleteInstances(<HatcheryServer.IBuild>{ user: user }).then(function (instance)
             {
                 return resolve(instance);
 
@@ -178,7 +177,7 @@ export class BuildController extends EngineController
 
         return new Promise<number>(function (resolve, reject)
         {
-            model.deleteInstances(<Engine.IBuild>{ projectId: project, user: user }).then(function (instance)
+            model.deleteInstances(<HatcheryServer.IBuild>{ projectId: project, user: user }).then(function (instance)
             {
                 return resolve(instance);
 
@@ -201,7 +200,7 @@ export class BuildController extends EngineController
 
         return new Promise<any>(function (resolve, reject)
         {
-            model.update(<Engine.IBuild>{ _id: new mongodb.ObjectID(buildId) }, <Engine.IBuild>{ projectId: new mongodb.ObjectID(projId) }).then(function (instances)
+            model.update(<HatcheryServer.IBuild>{ _id: new mongodb.ObjectID(buildId) }, <HatcheryServer.IBuild>{ projectId: new mongodb.ObjectID(projId) }).then(function (instances)
             {
                 if (instances.error)
                     return Promise.reject(new Error("An error has occurred while linking the build with a project"));
@@ -229,8 +228,8 @@ export class BuildController extends EngineController
         var model = that.getModel("en-builds");
         var project: string = req.params.project;
         var id: string = req.params.id;
-        var search: Engine.IBuild = {};
-        var token: Engine.IBuild = req.body;
+        var search: HatcheryServer.IBuild = {};
+        var token: HatcheryServer.IBuild = req.body;
 
         // Verify the resource ID
         if (!modepress.isValidID(id))
@@ -286,34 +285,34 @@ export class BuildController extends EngineController
         if (!modepress.isValidID(project))
             return res.end(JSON.stringify(<ModepressAddons.IGetBuilds>{ error: true, message: `Please use a valid project ID` }));
 
-        var newBuild : modepress.ModelInstance<Engine.IBuild>;
+        var newBuild : modepress.ModelInstance<HatcheryServer.IBuild>;
 
 
 
         that.createBuild( target, new mongodb.ObjectID(project) ).then(function( instance ) {
 
             newBuild = instance;
-            var toRet : Promise<Modepress.UpdateRequest<Engine.IProject>>;
+            var toRet : Promise<Modepress.UpdateRequest<HatcheryServer.IProject>>;
 
             if (setAsCurrent)
             {
                 var m = that.getModel("en-projects")
-                toRet = m.update<Engine.IProject>(<Engine.IProject>{
+                toRet = m.update<HatcheryServer.IProject>(<HatcheryServer.IProject>{
                     _id: new mongodb.ObjectID(project) }, { build: instance._id });
             }
             else
-                toRet = Promise.resolve( <Modepress.UpdateRequest<Engine.IProject>>{ error: false, tokens: [] } );
+                toRet = Promise.resolve( <Modepress.UpdateRequest<HatcheryServer.IProject>>{ error: false, tokens: [] } );
 
             return toRet;
 
-        }).then(function( updateToken ) : Promise<Error|Engine.IBuild> {
+        }).then(function( updateToken ) : Promise<Error|HatcheryServer.IBuild> {
 
             if (updateToken.error)
                 return Promise.reject<Error>(new Error( <string>updateToken.tokens[0].error ));
 
-            return newBuild.schema.getAsJson<Engine.IBuild>(newBuild._id, {verbose: true});
+            return newBuild.schema.getAsJson<HatcheryServer.IBuild>(newBuild._id, {verbose: true});
 
-        }).then(function(sanitizedData : Engine.IBuild ){
+        }).then(function(sanitizedData : HatcheryServer.IBuild ){
 
           return res.end(JSON.stringify( <ModepressAddons.IGetBuilds> {
                 error: false,

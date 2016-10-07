@@ -54,7 +54,7 @@ export class ResourceController extends EngineController
         var projectModel = this.getModel("projects");
         var that = this;
 
-        var newResource: Engine.IResource = req.body;
+        var newResource: HatcheryServer.IResource = req.body;
 
         // Set the user parameter
         newResource.user = req.params.user;
@@ -68,7 +68,7 @@ export class ResourceController extends EngineController
         newResource.projectId = new mongodb.ObjectID(project);
 
         // Save it in the DB
-        model.createInstance<Engine.IResource>(newResource).then(function(instance)
+        model.createInstance<HatcheryServer.IResource>(newResource).then(function(instance)
         {
             return instance.schema.getAsJson(instance._id, {verbose: true});
 
@@ -103,8 +103,8 @@ export class ResourceController extends EngineController
         var that = this;
         var project: string = req.params.project;
         var id: string = req.params.id;
-        var updateToken: Engine.IResource = {};
-        var token: Engine.IResource = req.body;
+        var updateToken: HatcheryServer.IResource = {};
+        var token: HatcheryServer.IResource = req.body;
 
         // Verify the resource ID
         if (!modepress.isValidID(id))
@@ -155,7 +155,7 @@ export class ResourceController extends EngineController
         var that = this;
         var project : string = req.params.project;
         var ids : string = req.params.ids;
-        var deleteToken: Engine.IResource = {};
+        var deleteToken: HatcheryServer.IResource = {};
 
         // Check for the project and verify its valid
         if (!modepress.isValidID(project))
@@ -177,7 +177,7 @@ export class ResourceController extends EngineController
                     if (!modepress.isValidID(idsArray[i]))
                         return res.end(JSON.stringify(<modepress.IResponse>{ error: true, message: `ID '${idsArray[i]}' is not a valid ID` }));
                     else
-                        (<any>deleteToken).$or.push(<Engine.IResource>{ _id : new mongodb.ObjectID(idsArray[i]) });
+                        (<any>deleteToken).$or.push(<HatcheryServer.IResource>{ _id : new mongodb.ObjectID(idsArray[i]) });
             }
         }
 
@@ -205,11 +205,11 @@ export class ResourceController extends EngineController
     *   {number} index The start index from where to fetch resources
     *   {number} limit The number of entries to be returned in the call
     *   {boolean} verbose If true, all information is returned. If false, then only public non-sensitive data
-    * @param {Engine.IResource} findToken
+    * @param {HatcheryServer.IResource} findToken
     * @param {express.Request} req
     * @param {express.Response} res
     */
-    protected getFromQuery( findToken: Engine.IResource, req: modepress.IAuthReq, res: express.Response )
+    protected getFromQuery( findToken: HatcheryServer.IResource, req: modepress.IAuthReq, res: express.Response )
     {
         var model = this._model;
         var that = this;
@@ -219,11 +219,11 @@ export class ResourceController extends EngineController
         model.count(findToken).then(function (num)
         {
             count = num;
-            return model.findInstances<Engine.IResource>(findToken, [], parseInt(req.query.index), parseInt(req.query.limit));
+            return model.findInstances<HatcheryServer.IResource>(findToken, [], parseInt(req.query.index), parseInt(req.query.limit));
 
         }).then(function (instances)
         {
-            var sanitizedData: Array<Engine.IResource> = [];
+            var sanitizedData: Array<HatcheryServer.IResource> = [];
             for (var i = 0, l = instances.length; i < l; i++)
                 sanitizedData.push(instances[i].schema.getAsJson(  instances[i]._id, {verbose: req._verbose}));
 
@@ -277,7 +277,7 @@ export class ResourceController extends EngineController
     protected getResources(req: modepress.IAuthReq, res: express.Response, next: Function)
     {
         res.setHeader('Content-Type', 'application/json');
-        var findToken: Engine.IResource = {};
+        var findToken: HatcheryServer.IResource = {};
         var project = req.params.project;
         var id = req.params.id;
 

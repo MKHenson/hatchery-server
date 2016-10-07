@@ -4,7 +4,6 @@ import * as modepress from "modepress-api";
 import {PermissionController} from "./permission-controller";
 import {BuildController} from "./build-controller";
 import {ProjectModel} from "../models/project-model";
-import {IProject} from "engine";
 import * as winston from "winston";
 import {EngineController} from "./engine-controller";
 
@@ -61,7 +60,7 @@ export class ProjectController extends EngineController
 
         return new Promise<modepress.IRemoveResponse>(function (resolve, reject)
         {
-            model.findInstances<Engine.IProject>(selector).then(function (instances)
+            model.findInstances<HatcheryServer.IProject>(selector).then(function (instances)
             {
                 if (instances.length == 0)
                     return resolve(toRet);
@@ -70,7 +69,7 @@ export class ProjectController extends EngineController
                 {
                     buildCtrl.removeByProject(val._id, val.dbEntry.user).then(function (numDeleted)
                     {
-                        return model.deleteInstances(<Engine.IProject>{ _id: val._id });
+                        return model.deleteInstances(<HatcheryServer.IProject>{ _id: val._id });
 
                     }).then(function (numDeleted)
                     {
@@ -108,7 +107,7 @@ export class ProjectController extends EngineController
     */
     removeByUser(user: string): Promise<modepress.IRemoveResponse>
     {
-        return this.removeByQuery(<Engine.IProject>{ user: user });
+        return this.removeByQuery(<HatcheryServer.IProject>{ user: user });
     }
 
     /**
@@ -118,8 +117,8 @@ export class ProjectController extends EngineController
     */
     removeByIds(ids: Array<string>, user: string): Promise<modepress.IRemoveResponse>
     {
-        var findToken: Engine.IProject = { user: user };
-        var $or: Array<Engine.IProject> = [];
+        var findToken: HatcheryServer.IProject = { user: user };
+        var $or: Array<HatcheryServer.IProject> = [];
 
         for (var i = 0, l = ids.length; i < l; i++)
             $or.push({ _id: new mongodb.ObjectID(ids[i]) });
@@ -142,8 +141,8 @@ export class ProjectController extends EngineController
         var model = this.getModel("en-projects");
         var that = this;
         var project: string = req.params.project;
-        var updateToken: Engine.IProject = {};
-        var token: Engine.IProject = req.body;
+        var updateToken: HatcheryServer.IProject = {};
+        var token: HatcheryServer.IProject = req.body;
 
         // Verify the project ID
         if (!modepress.isValidID(project))
@@ -244,11 +243,11 @@ export class ProjectController extends EngineController
         // ✔ Check if project limit was reached - if over then remove project
 
         res.setHeader('Content-Type', 'application/json');
-        var token: Engine.IProject = req.body;
+        var token: HatcheryServer.IProject = req.body;
         var projects = this.getModel("en-projects");
         var buildCtrl = BuildController.singleton;
-        var newBuild: Modepress.ModelInstance<Engine.IBuild>;
-        var newProject: Modepress.ModelInstance<Engine.IProject>;
+        var newBuild: Modepress.ModelInstance<HatcheryServer.IBuild>;
+        var newProject: Modepress.ModelInstance<HatcheryServer.IProject>;
         var that = this;
 
         // User is passed from the authentication function
@@ -326,7 +325,7 @@ export class ProjectController extends EngineController
         model.count(query).then(function (num)
         {
             count = num;
-            return model.findInstances<IProject>(query, [], parseInt(req.query.index), parseInt(req.query.limit));
+            return model.findInstances<HatcheryServer.IProject>(query, [], parseInt(req.query.index), parseInt(req.query.limit));
 
         }).then(function (instances)
         {
@@ -376,7 +375,7 @@ export class ProjectController extends EngineController
     getProjects(req: modepress.IAuthReq, res: express.Response, next: Function)
     {
         res.setHeader('Content-Type', 'application/json');
-        var findToken: IProject = {};
+        var findToken: HatcheryServer.IProject = {};
         findToken.user = req.params.user;
 
         // Check for keywords
@@ -395,7 +394,7 @@ export class ProjectController extends EngineController
     getProject(req: modepress.IAuthReq, res: express.Response, next: Function)
     {
         res.setHeader('Content-Type', 'application/json');
-        var findToken: IProject = {};
+        var findToken: HatcheryServer.IProject = {};
         findToken.user = req.params.user;
 
         // Check for valid ID
