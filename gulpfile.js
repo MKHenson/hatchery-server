@@ -72,7 +72,7 @@ function getDefinition(url, dest, name) {
 // Builds the definition
 gulp.task('generate-declarations', function() {
 
-    var tsDefinition = gulp.src("lib/definitions/custom/app-engine.d.ts", { base: "lib/definitions/custom" })
+    var tsDefinition = gulp.src("lib/definitions/custom/hatchery-server.d.ts", { base: "lib/definitions/custom" })
        .pipe(gulp.dest("./lib/definitions/generated"));
 });
 
