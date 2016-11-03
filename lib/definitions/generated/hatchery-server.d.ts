@@ -183,11 +183,11 @@ declare module ModepressAddons {
     export interface IGetResources extends Modepress.IGetArrayResponse<HatcheryServer.IResource> { }
 }
 
-declare module "hatchery-server" {
+declare module 'hatchery-server' {
     export = HatcheryServer;
 }
 
-declare module "modepress-addons"
+declare module 'modepress-addons'
 {
     export = ModepressAddons;
 }

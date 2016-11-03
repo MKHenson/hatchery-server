@@ -1,9 +1,9 @@
-﻿import * as mongodb from "mongodb";
-import * as express from "express";
-import * as modepress from "modepress-api";
-import { BuildModel } from "../models/build-model";
-import * as winston from "winston";
-import { EngineController } from "./engine-controller";
+﻿import * as mongodb from 'mongodb';
+import * as express from 'express';
+import * as modepress from 'modepress-api';
+import { BuildModel } from '../models/build-model';
+import * as winston from 'winston';
+import { EngineController } from './engine-controller';
 
 /**
 * A controller that deals with build models
@@ -22,9 +22,9 @@ export class BuildController extends EngineController {
         BuildController.singleton = this;
 
         // Define the routes
-        this.router.get( "/users/:user/projects/:project/builds/:id?", <any>[ modepress.canEdit, this.getBuilds.bind( this ) ] );
-        this.router.post( "/users/:user/projects/:project/builds", <any>[ modepress.canEdit, this.create.bind( this ) ] );
-        this.router.put( "/users/:user/projects/:project/builds/:id", <any>[ modepress.canEdit, this.edit.bind( this ) ] );
+        this.router.get( '/users/:user/projects/:project/builds/:id?', <any>[ modepress.canEdit, this.getBuilds.bind( this ) ] );
+        this.router.post( '/users/:user/projects/:project/builds', <any>[ modepress.canEdit, this.create.bind( this ) ] );
+        this.router.put( '/users/:user/projects/:project/builds/:id', <any>[ modepress.canEdit, this.edit.bind( this ) ] );
     }
 
     /**
@@ -34,17 +34,16 @@ export class BuildController extends EngineController {
     * @param {Function} next
     */
     getBuilds( req: modepress.IAuthReq, res: express.Response, next: Function ) {
-        var that = this;
         res.setHeader( 'Content-Type', 'application/json' );
-        var target = req.params.user;
-        var project = req.params.project;
-        var model = that.getModel( "en-builds" );
-        var totalMatches = 0;
+        const target = req.params.user;
+        const project = req.params.project;
+        const model = this.getModel( 'en-builds' );
+        let totalMatches = 0;
 
         if ( !modepress.isValidID( project ) )
             return res.end( JSON.stringify( <modepress.IResponse>{ error: true, message: `Please use a valid project ID` }) );
 
-        var findToken: HatcheryServer.IBuild = { user: target, projectId: new mongodb.ObjectID( project ) };
+        const findToken: HatcheryServer.IBuild = { user: target, projectId: new mongodb.ObjectID( project ) };
 
         if ( req.params.id && modepress.isValidID( req.params.id ) )
             findToken._id = new mongodb.ObjectID( req.params.id );
@@ -54,8 +53,8 @@ export class BuildController extends EngineController {
             return model.findInstances<HatcheryServer.IBuild>( findToken, [], parseInt( req.query.index ), parseInt( req.query.limit ) );
 
         }).then( function( instances ) {
-            var sanitizedData = [];
-            for ( var i = 0, l = instances.length; i < l; i++ )
+            const sanitizedData = [];
+            for ( let i = 0, l = instances.length; i < l; i++ )
                 sanitizedData.push( instances[ i ].schema.getAsJson( instances[ i ]._id, { verbose: Boolean( req.query.verbose ) }) );
 
             return Promise.all( sanitizedData );
@@ -83,8 +82,7 @@ export class BuildController extends EngineController {
     * @returns {Promise<Modepress.ModelInstance<HatcheryServer.IBuild>>}
     */
     createBuild( username: string, project?: mongodb.ObjectID ): Promise<Modepress.ModelInstance<HatcheryServer.IBuild>> {
-        var that = this;
-        var model = that.getModel( "en-builds" );
+        const model = this.getModel( 'en-builds' );
 
         return new Promise<Modepress.ModelInstance<HatcheryServer.IBuild>>( function( resolve, reject ) {
             model.createInstance( <HatcheryServer.IBuild>{ name: '', user: username, projectId: project }).then( function( instance ) {
@@ -104,16 +102,15 @@ export class BuildController extends EngineController {
     * @returns {Promise<number>}
     */
     removeByIds( ids: Array<string>, user: string ): Promise<number> {
-        var that = this;
-        var model = that.getModel( "en-builds" );
+        const model = this.getModel( 'en-builds' );
 
-        var findToken: HatcheryServer.IBuild = { user: user };
-        var $or: Array<HatcheryServer.IBuild> = [];
-        for ( var i = 0, l = ids.length; i < l; i++ )
+        const findToken: HatcheryServer.IBuild = { user: user };
+        const $or: Array<HatcheryServer.IBuild> = [];
+        for ( let i = 0, l = ids.length; i < l; i++ )
             $or.push( { _id: new mongodb.ObjectID( ids[ i ] ) });
 
         if ( $or.length > 0 )
-            findToken[ "$or" ] = $or;
+            findToken[ '$or' ] = $or;
 
         return new Promise<number>( function( resolve, reject ) {
             model.deleteInstances( findToken ).then( function( numDeleted ) {
@@ -132,8 +129,7 @@ export class BuildController extends EngineController {
     * @returns {Promise<number>}
     */
     removeByUser( user: string ): Promise<number> {
-        var that = this;
-        var model = that.getModel( "en-builds" );
+        const model = this.getModel( 'en-builds' );
 
         return new Promise<number>( function( resolve, reject ) {
             model.deleteInstances( <HatcheryServer.IBuild>{ user: user }).then( function( instance ) {
@@ -153,14 +149,13 @@ export class BuildController extends EngineController {
     * @returns {Promise<number>}
     */
     removeByProject( project: mongodb.ObjectID, user: string ): Promise<number> {
-        var that = this;
-        var model = that.getModel( "en-builds" );
+        const model = this.getModel( 'en-builds' );
 
-        return new Promise<number>( function( resolve, reject ) {
+        return new Promise<number>(( resolve, reject ) => {
             model.deleteInstances( <HatcheryServer.IBuild>{ projectId: project, user: user }).then( function( instance ) {
                 return resolve( instance );
 
-            }).catch( function( err: Error ) {
+            }).catch(( err: Error ) => {
                 winston.error( err.message, { process: process.pid });
                 return reject( err );
             });
@@ -172,17 +167,16 @@ export class BuildController extends EngineController {
     * @returns {Promise<any>}
     */
     linkProject( buildId: string, projId: string ): Promise<any> {
-        var that = this;
-        var model = that.getModel( "en-builds" );
+        const model = this.getModel( 'en-builds' );
 
-        return new Promise<any>( function( resolve, reject ) {
+        return new Promise<any>(( resolve, reject ) => {
             model.update( <HatcheryServer.IBuild>{ _id: new mongodb.ObjectID( buildId ) }, <HatcheryServer.IBuild>{ projectId: new mongodb.ObjectID( projId ) }).then( function( instances ) {
                 if ( instances.error )
-                    throw new Error( "An error has occurred while linking the build with a project" );
+                    throw new Error( 'An error has occurred while linking the build with a project' );
 
                 return resolve();
 
-            }).catch( function( err: Error ) {
+            }).catch(( err: Error ) => {
                 winston.error( err.message, { process: process.pid });
                 return reject( err );
             });
@@ -197,24 +191,23 @@ export class BuildController extends EngineController {
     */
     protected edit( req: modepress.IAuthReq, res: express.Response, next: Function ) {
         res.setHeader( 'Content-Type', 'application/json' );
-        var that = this;
-        var model = that.getModel( "en-builds" );
-        var project: string = req.params.project;
-        var id: string = req.params.id;
-        var search: HatcheryServer.IBuild = {};
-        var token: HatcheryServer.IBuild = req.body;
+        const model = this.getModel( 'en-builds' );
+        const project: string = req.params.project;
+        const id: string = req.params.id;
+        const search: HatcheryServer.IBuild = {};
+        const token: HatcheryServer.IBuild = req.body;
 
         // Verify the resource ID
         if ( !modepress.isValidID( id ) )
-            return res.end( JSON.stringify( <modepress.IResponse>{ error: true, message: "Please use a valid resource ID" }) );
+            return res.end( JSON.stringify( <modepress.IResponse>{ error: true, message: 'Please use a valid resource ID' }) );
 
         // Verify the project ID
         if ( !modepress.isValidID( project ) )
-            return res.end( JSON.stringify( <modepress.IResponse>{ error: true, message: "Please use a valid project ID" }) );
+            return res.end( JSON.stringify( <modepress.IResponse>{ error: true, message: 'Please use a valid project ID' }) );
 
         search._id = new mongodb.ObjectID( id );
         search.projectId = new mongodb.ObjectID( project );
-        model.update( search, token ).then( function( instance ) {
+        model.update( search, token ).then(( instance ) => {
             if ( instance.error ) {
                 winston.error( <string>instance.tokens[ 0 ].error, { process: process.pid });
                 return res.end( JSON.stringify( <modepress.IResponse>{
@@ -228,7 +221,7 @@ export class BuildController extends EngineController {
                 message: `[${instance.tokens.length}] Build updated`
             }) );
 
-        }).catch( function( error: Error ) {
+        }).catch(( error: Error ) => {
             winston.error( error.message, { process: process.pid });
             res.end( JSON.stringify( <modepress.IResponse>{
                 error: true,
@@ -244,27 +237,26 @@ export class BuildController extends EngineController {
     * @param {Function} next
     */
     create( req: modepress.IAuthReq, res: express.Response, next: Function ) {
-        var that = this;
         res.setHeader( 'Content-Type', 'application/json' );
-        var target = req.params.user;
-        var project = req.params.project;
-        var model = that.getModel( "en-builds" );
-        var setAsCurrent = ( req.query[ "set-current" ] ? true : false );
+        const target = req.params.user;
+        const project = req.params.project;
+        const model = this.getModel( 'en-builds' );
+        const setAsCurrent = ( req.query[ 'set-current' ] ? true : false );
 
         if ( !modepress.isValidID( project ) )
             return res.end( JSON.stringify( <ModepressAddons.IGetBuilds>{ error: true, message: `Please use a valid project ID` }) );
 
-        var newBuild: modepress.ModelInstance<HatcheryServer.IBuild>;
+        let newBuild: modepress.ModelInstance<HatcheryServer.IBuild>;
 
 
 
-        that.createBuild( target, new mongodb.ObjectID( project ) ).then( function( instance ) {
+        this.createBuild( target, new mongodb.ObjectID( project ) ).then(( instance ) => {
 
             newBuild = instance;
-            var toRet: Promise<Modepress.UpdateRequest<HatcheryServer.IProject>>;
+            let toRet: Promise<Modepress.UpdateRequest<HatcheryServer.IProject>>;
 
             if ( setAsCurrent ) {
-                var m = that.getModel( "en-projects" )
+                const m = this.getModel( 'en-projects' )
                 toRet = m.update<HatcheryServer.IProject>( <HatcheryServer.IProject>{
                     _id: new mongodb.ObjectID( project )
                 }, { build: instance._id });
@@ -274,14 +266,14 @@ export class BuildController extends EngineController {
 
             return toRet;
 
-        }).then( function( updateToken ): Promise<Error | HatcheryServer.IBuild> {
+        }).then(( updateToken ): Promise<Error | HatcheryServer.IBuild> => {
 
             if ( updateToken.error )
                 return Promise.reject<Error>( new Error( <string>updateToken.tokens[ 0 ].error ) );
 
             return newBuild.schema.getAsJson<HatcheryServer.IBuild>( newBuild._id, { verbose: true });
 
-        }).then( function( sanitizedData: HatcheryServer.IBuild ) {
+        }).then(( sanitizedData: HatcheryServer.IBuild ) => {
 
             return res.end( JSON.stringify( <ModepressAddons.IGetBuilds>{
                 error: false,
@@ -290,7 +282,7 @@ export class BuildController extends EngineController {
                 data: sanitizedData
             }) );
 
-        }).catch( function( err: Error ) {
+        }).catch(( err: Error ) => {
             winston.error( err.message, { process: process.pid });
             return res.end( JSON.stringify( <modepress.IResponse>{
                 error: true,

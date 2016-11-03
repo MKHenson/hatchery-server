@@ -1,13 +1,13 @@
 var gulp = require( 'gulp' );
 var ts = require( 'gulp-typescript' );
-var yargs = require( "yargs" );
+var yargs = require( 'yargs' );
 var utils = require( './gulp/utils.js' );
 var tslint = require( 'gulp-tslint' );
 
 const modepressPluginDir = yargs.argv.dir || null;
 
 if ( !modepressPluginDir )
-    console.warn( "WARNING: No output directory specified." );
+    console.warn( 'WARNING: No output directory specified.' );
 
 const tsProject = ts.createProject( 'tsconfig.json' );
 const configFiles = [
@@ -43,8 +43,8 @@ gulp.task( 'lint-typescript', function() {
 
 // Builds the definition
 gulp.task( 'generate-declarations', function() {
-    var tsDefinition = gulp.src( "lib/definitions/custom/hatchery-server.d.ts", { base: "lib/definitions/custom" })
-        .pipe( gulp.dest( "./lib/definitions/generated" ) );
+    var tsDefinition = gulp.src( 'lib/definitions/custom/hatchery-server.d.ts', { base: 'lib/definitions/custom' })
+        .pipe( gulp.dest( './lib/definitions/generated' ) );
 });
 
 /**
@@ -52,9 +52,9 @@ gulp.task( 'generate-declarations', function() {
  */
 gulp.task( 'install-definitions', function() {
     return Promise.all( [
-        utils.getDefinition( "https://raw.githubusercontent.com/PixelSwarm/hatchery-runtime/dev/lib/definitions/generated/hatchery-runtime.d.ts", "lib/definitions/required/", "hatchery-runtime.d.ts" ),
-        utils.getDefinition( "https://raw.githubusercontent.com/Webinate/users/dev/src/definitions/generated/users.d.ts", "lib/definitions/required/", "users.d.ts" ),
-        utils.getDefinition( "https://raw.githubusercontent.com/Webinate/modepress/dev/src/definitions/generated/modepress.d.ts", "lib/definitions/required/", "modepress.d.ts" )
+        utils.getDefinition( 'https://raw.githubusercontent.com/PixelSwarm/hatchery-runtime/dev/lib/definitions/generated/hatchery-runtime.d.ts', 'lib/definitions/required/', 'hatchery-runtime.d.ts' ),
+        utils.getDefinition( 'https://raw.githubusercontent.com/Webinate/users/dev/src/definitions/generated/users.d.ts', 'lib/definitions/required/', 'users.d.ts' ),
+        utils.getDefinition( 'https://raw.githubusercontent.com/Webinate/modepress/dev/src/definitions/generated/modepress.d.ts', 'lib/definitions/required/', 'modepress.d.ts' )
     ] );
 });
 
@@ -66,7 +66,7 @@ gulp.task( 'copy-dist', [ 'compile-typescript', 'generate-declarations' ], funct
     if ( !modepressPluginDir )
         return Promise.resolve();
 
-    return gulp.src( "./dist/**", { base: "dist" })
+    return gulp.src( './dist/**', { base: 'dist' })
         .pipe( gulp.dest( modepressPluginDir ) );
 });
 

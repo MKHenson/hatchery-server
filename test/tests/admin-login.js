@@ -15,7 +15,7 @@ describe( 'Testing REST with admin user', function() {
             .end( function( err, res ) {
                 if ( err ) return done( err );
                 test.bool( res.body.error ).isNotTrue()
-                test.object( res.body ).hasProperty( "message" )
+                test.object( res.body ).hasProperty( 'message' )
                 done();
             });
     })
@@ -28,8 +28,8 @@ describe( 'Testing REST with admin user', function() {
                 if ( err ) return done( err );
                 test.bool( res.body.error ).isNotTrue()
                 test.bool( res.body.authenticated ).isTrue()
-                test.object( res.body ).hasProperty( "message" )
-                header.variables().adminCookie = res.headers[ "set-cookie" ][ 0 ].split( ";" )[ 0 ];
+                test.object( res.body ).hasProperty( 'message' )
+                header.variables().adminCookie = res.headers[ 'set-cookie' ][ 0 ].split( ';' )[ 0 ];
                 done();
             });
     }).timeout( 25000 )

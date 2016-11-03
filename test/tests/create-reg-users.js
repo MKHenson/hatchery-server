@@ -29,12 +29,12 @@ describe( 'Creating two regular users geoge and jane', function() {
     it( 'did create regular user george', function( done ) {
         usersAgent
             .post( '/users' ).set( 'Accept', 'application/json' ).expect( 200 ).expect( 'Content-Type', /json/ )
-            .send( { username: "george", password: "password", email: "test@test.com", privileges: 3 })
+            .send( { username: 'george', password: 'password', email: 'test@test.com', privileges: 3 })
             .set( 'Cookie', header.variables().adminCookie )
             .end( function( err, res ) {
                 if ( err ) return done( err );
                 test.bool( res.body.error ).isFalse()
-                test.object( res.body ).hasProperty( "message" )
+                test.object( res.body ).hasProperty( 'message' )
                 done();
             });
     }).timeout( 16000 )
@@ -42,12 +42,12 @@ describe( 'Creating two regular users geoge and jane', function() {
     it( 'did create another regular user jane with valid details', function( done ) {
         usersAgent
             .post( '/users' ).set( 'Accept', 'application/json' ).expect( 200 ).expect( 'Content-Type', /json/ )
-            .send( { username: "jane", password: "password", email: "test2@test.com", privileges: 3 })
+            .send( { username: 'jane', password: 'password', email: 'test2@test.com', privileges: 3 })
             .set( 'Cookie', header.variables().adminCookie )
             .end( function( err, res ) {
                 if ( err ) return done( err );
                 test.bool( res.body.error ).isFalse()
-                test.object( res.body ).hasProperty( "message" )
+                test.object( res.body ).hasProperty( 'message' )
                 done();
             });
     }).timeout( 16000 )
@@ -77,12 +77,12 @@ describe( 'Creating two regular users geoge and jane', function() {
     it( 'did get georges cookie', function( done ) {
         usersAgent
             .post( '/users/login' ).set( 'Accept', 'application/json' ).expect( 200 ).expect( 'Content-Type', /json/ )
-            .send( { username: "george", password: "password" })
+            .send( { username: 'george', password: 'password' })
             .end( function( err, res ) {
                 if ( err ) return done( err );
                 test.bool( res.body.error ).isFalse()
                 test.bool( res.body.authenticated ).isTrue()
-                header.variables().georgeCookie = res.headers[ "set-cookie" ][ 0 ].split( ";" )[ 0 ];
+                header.variables().georgeCookie = res.headers[ 'set-cookie' ][ 0 ].split( ';' )[ 0 ];
                 done();
             });
     })
@@ -90,12 +90,12 @@ describe( 'Creating two regular users geoge and jane', function() {
     it( 'did get janes cookie', function( done ) {
         usersAgent
             .post( '/users/login' ).set( 'Accept', 'application/json' ).expect( 200 ).expect( 'Content-Type', /json/ )
-            .send( { username: "jane", password: "password" })
+            .send( { username: 'jane', password: 'password' })
             .end( function( err, res ) {
                 if ( err ) return done( err );
                 test.bool( res.body.error ).isFalse()
                 test.bool( res.body.authenticated ).isTrue()
-                header.variables().janeCookie = res.headers[ "set-cookie" ][ 0 ].split( ";" )[ 0 ];
+                header.variables().janeCookie = res.headers[ 'set-cookie' ][ 0 ].split( ';' )[ 0 ];
                 done();
             });
     })

@@ -1,11 +1,11 @@
-﻿import * as mongodb from "mongodb";
-import * as express from "express";
-import * as modepress from "modepress-api";
-import { PermissionController } from "./permission-controller";
-import { BuildController } from "./build-controller";
-import { ProjectModel } from "../models/project-model";
-import * as winston from "winston";
-import { EngineController } from "./engine-controller";
+﻿import * as mongodb from 'mongodb';
+import * as express from 'express';
+import * as modepress from 'modepress-api';
+import { PermissionController } from './permission-controller';
+import { BuildController } from './build-controller';
+import { ProjectModel } from '../models/project-model';
+import * as winston from 'winston';
+import { EngineController } from './engine-controller';
 
 /**
 * A controller that deals with project models
@@ -21,15 +21,15 @@ export class ProjectController extends EngineController {
         super( [ modepress.Model.registerModel( ProjectModel ) ], server, config, e );
 
         // Get the project privilege controllers
-        var canRead = PermissionController.singleton.canReadProject.bind( PermissionController.singleton );
-        var canAdmin = PermissionController.singleton.canAdminProject.bind( PermissionController.singleton );
+        const canRead = PermissionController.singleton.canReadProject.bind( PermissionController.singleton );
+        const canAdmin = PermissionController.singleton.canAdminProject.bind( PermissionController.singleton );
 
-        this.router.get( "/projects", <any>[ modepress.isAdmin, this.getAllProjects.bind( this ) ] );
-        this.router.post( "/projects", <any>[ modepress.isAuthenticated, this.createProject.bind( this ) ] );
-        this.router.get( "/users/:user/projects", <any>[ modepress.getUser, this.getProjects.bind( this ) ] );
-        this.router.get( "/users/:user/projects/:project", <any>[ modepress.getUser, canRead, this.getProject.bind( this ) ] );
-        this.router.put( "/users/:user/projects/:project", <any>[ modepress.canEdit, canAdmin, this.updateProject.bind( this ) ] );
-        this.router.delete( "/users/:user/projects/:projects", <any>[ modepress.canEdit, this.remove.bind( this ) ] );
+        this.router.get( '/projects', <any>[ modepress.isAdmin, this.getAllProjects.bind( this ) ] );
+        this.router.post( '/projects', <any>[ modepress.isAuthenticated, this.createProject.bind( this ) ] );
+        this.router.get( '/users/:user/projects', <any>[ modepress.getUser, this.getProjects.bind( this ) ] );
+        this.router.get( '/users/:user/projects/:project', <any>[ modepress.getUser, canRead, this.getProject.bind( this ) ] );
+        this.router.put( '/users/:user/projects/:project', <any>[ modepress.canEdit, canAdmin, this.updateProject.bind( this ) ] );
+        this.router.delete( '/users/:user/projects/:projects', <any>[ modepress.canEdit, this.remove.bind( this ) ] );
 
         let userRemoved: UsersInterface.SocketTokens.ClientInstructionType = 'Removed';
         modepress.EventManager.singleton.on( userRemoved, this.onUserRemoved.bind( this ) );
@@ -49,14 +49,14 @@ export class ProjectController extends EngineController {
     * @returns {Promise<IRemoveResponse>}
     */
     removeByQuery( selector: any ): Promise<modepress.IRemoveResponse> {
-        var toRet: modepress.IRemoveResponse = { error: false, message: "0 items have been removed", itemsRemoved: [] };
-        var model = this.getModel( "en-projects" );
-        var buildCtrl = BuildController.singleton;
-        var numRemoved = 0;
+        const toRet: modepress.IRemoveResponse = { error: false, message: '0 items have been removed', itemsRemoved: [] };
+        const model = this.getModel( 'en-projects' );
+        const buildCtrl = BuildController.singleton;
+        let numRemoved = 0;
 
         return new Promise<modepress.IRemoveResponse>( function( resolve, reject ) {
             model.findInstances<HatcheryServer.IProject>( selector ).then( function( instances ) {
-                if ( instances.length == 0 )
+                if ( instances.length === 0 )
                     return resolve( toRet );
 
                 instances.forEach( function( val, index ) {
@@ -65,8 +65,8 @@ export class ProjectController extends EngineController {
 
                     }).then( function( numDeleted ) {
                         numRemoved++;
-                        toRet.itemsRemoved.push( { id: val._id, error: false, errorMsg: "" });
-                        if ( index == instances.length - 1 ) {
+                        toRet.itemsRemoved.push( { id: val._id, error: false, errorMsg: '' });
+                        if ( index === instances.length - 1 ) {
                             toRet.message = `${numRemoved} items have been removed`;
                             return resolve( toRet );
                         }
@@ -75,7 +75,7 @@ export class ProjectController extends EngineController {
                         toRet.itemsRemoved.push( { id: val._id, error: true, errorMsg: err.message });
                         toRet.error = true;
                         toRet.message = `An error occurred when deleting project ${val._id}`
-                        winston.error( toRet.message + " : " + err.message, { process: process.pid });
+                        winston.error( toRet.message + ' : ' + err.message, { process: process.pid });
                     });
                 });
 
@@ -103,14 +103,14 @@ export class ProjectController extends EngineController {
     * @returns {Promise<IRemoveResponse>}
     */
     removeByIds( ids: Array<string>, user: string ): Promise<modepress.IRemoveResponse> {
-        var findToken: HatcheryServer.IProject = { user: user };
-        var $or: Array<HatcheryServer.IProject> = [];
+        const findToken: HatcheryServer.IProject = { user: user };
+        const $or: Array<HatcheryServer.IProject> = [];
 
-        for ( var i = 0, l = ids.length; i < l; i++ )
+        for ( let i = 0, l = ids.length; i < l; i++ )
             $or.push( { _id: new mongodb.ObjectID( ids[ i ] ) });
 
         if ( $or.length > 0 )
-            findToken[ "$or" ] = $or;
+            findToken[ '$or' ] = $or;
 
         return this.removeByQuery( findToken );
     }
@@ -123,15 +123,15 @@ export class ProjectController extends EngineController {
     */
     private updateProject( req: modepress.IAuthReq, res: express.Response, next: Function ) {
         res.setHeader( 'Content-Type', 'application/json' );
-        var model = this.getModel( "en-projects" );
-        var that = this;
-        var project: string = req.params.project;
-        var updateToken: HatcheryServer.IProject = {};
-        var token: HatcheryServer.IProject = req.body;
+        const model = this.getModel( 'en-projects' );
+        const that = this;
+        const project: string = req.params.project;
+        const updateToken: HatcheryServer.IProject = {};
+        const token: HatcheryServer.IProject = req.body;
 
         // Verify the project ID
         if ( !modepress.isValidID( project ) )
-            return res.end( JSON.stringify( <modepress.IResponse>{ error: true, message: "Please use a valid project ID" }) );
+            return res.end( JSON.stringify( <modepress.IResponse>{ error: true, message: 'Please use a valid project ID' }) );
 
         updateToken._id = new mongodb.ObjectID( project );
         updateToken.user = req._user.username;
@@ -166,14 +166,14 @@ export class ProjectController extends EngineController {
     * @param {Function} next
     */
     remove( req: modepress.IAuthReq, res: express.Response, next: Function ) {
-        var that = this;
-        var target = req.params.user;
-        var projectIds = req.params.projects.split( "," );
-        var validityPromises: Array<Promise<boolean>> = [];
+        const that = this;
+        const target = req.params.user;
+        const projectIds = req.params.projects.split( ',' );
+        const validityPromises: Array<Promise<boolean>> = [];
 
         req._suppressNext = true;
 
-        for ( var i = 0, l = projectIds.length; i < l; i++ ) {
+        for ( let i = 0, l = projectIds.length; i < l; i++ ) {
             req.params.project = projectIds[ i ];
             validityPromises.push( PermissionController.singleton.canAdminProject( req, res, next ) );
         }
@@ -181,7 +181,7 @@ export class ProjectController extends EngineController {
         // Check all the validity promises. If any one of them is false, then there is something wrong.
         Promise.all( validityPromises ).then( function( validityArray ) {
 
-            for ( var i = 0, l = validityArray.length; i < l; i++ )
+            for ( let i = 0, l = validityArray.length; i < l; i++ )
                 if ( !validityArray[ i ] )
                     return null;
 
@@ -220,12 +220,12 @@ export class ProjectController extends EngineController {
         // ✔ Check if project limit was reached - if over then remove project
 
         res.setHeader( 'Content-Type', 'application/json' );
-        var token: HatcheryServer.IProject = req.body;
-        var projects = this.getModel( "en-projects" );
-        var buildCtrl = BuildController.singleton;
-        var newBuild: Modepress.ModelInstance<HatcheryServer.IBuild>;
-        var newProject: Modepress.ModelInstance<HatcheryServer.IProject>;
-        var that = this;
+        const token: HatcheryServer.IProject = req.body;
+        const projects = this.getModel( 'en-projects' );
+        const buildCtrl = BuildController.singleton;
+        let newBuild: Modepress.ModelInstance<HatcheryServer.IBuild>;
+        let newProject: Modepress.ModelInstance<HatcheryServer.IProject>;
+        const that = this;
 
         // User is passed from the authentication function
         token.user = req._user.username;
@@ -284,9 +284,9 @@ export class ProjectController extends EngineController {
     }
 
     getByQuery( query: any, req: modepress.IAuthReq, res: express.Response ) {
-        var model = this.getModel( "en-projects" );
-        var that = this;
-        var count = 0;
+        const model = this.getModel( 'en-projects' );
+        const that = this;
+        let count = 0;
 
         // First get the count
         model.count( query ).then( function( num ) {
@@ -294,8 +294,8 @@ export class ProjectController extends EngineController {
             return model.findInstances<HatcheryServer.IProject>( query, [], parseInt( req.query.index ), parseInt( req.query.limit ) );
 
         }).then( function( instances ) {
-            var sanitizedData = [];
-            for ( var i = 0, l = instances.length; i < l; i++ )
+            const sanitizedData = [];
+            for ( let i = 0, l = instances.length; i < l; i++ )
                 sanitizedData.push( instances[ i ].schema.getAsJson( instances[ i ]._id, { verbose: req._verbose }) );
 
             return Promise.all( sanitizedData );
@@ -337,12 +337,12 @@ export class ProjectController extends EngineController {
     */
     getProjects( req: modepress.IAuthReq, res: express.Response, next: Function ) {
         res.setHeader( 'Content-Type', 'application/json' );
-        var findToken: HatcheryServer.IProject = {};
+        const findToken: HatcheryServer.IProject = {};
         findToken.user = req.params.user;
 
         // Check for keywords
         if ( req.query.search )
-            findToken.name = <any>new RegExp( req.query.search, "i" );
+            findToken.name = <any>new RegExp( req.query.search, 'i' );
 
         this.getByQuery( findToken, req, res );
     }
@@ -355,7 +355,7 @@ export class ProjectController extends EngineController {
     */
     getProject( req: modepress.IAuthReq, res: express.Response, next: Function ) {
         res.setHeader( 'Content-Type', 'application/json' );
-        var findToken: HatcheryServer.IProject = {};
+        const findToken: HatcheryServer.IProject = {};
         findToken.user = req.params.user;
 
         // Check for valid ID
@@ -363,7 +363,7 @@ export class ProjectController extends EngineController {
             if ( modepress.isValidID( req.params.project ) )
                 findToken._id = new mongodb.ObjectID( req.params.project );
             else
-                return res.end( JSON.stringify( <modepress.IResponse>{ error: true, message: "Please use a valid object id" }) );
+                return res.end( JSON.stringify( <modepress.IResponse>{ error: true, message: 'Please use a valid object id' }) );
 
         this.getByQuery( findToken, req, res );
     }

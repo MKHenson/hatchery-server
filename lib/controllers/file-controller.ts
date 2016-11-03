@@ -1,11 +1,11 @@
-﻿import * as mongodb from "mongodb";
-import * as express from "express";
-import * as modepress from "modepress-api";
-import { UserDetailsModel } from "../models/user-details-model";
-import * as winston from "winston";
-import { FileModel } from "../models/file-model";
-import * as request from "request"
-import { EngineController } from "./engine-controller";
+﻿import * as mongodb from 'mongodb';
+import * as express from 'express';
+import * as modepress from 'modepress-api';
+import { UserDetailsModel } from '../models/user-details-model';
+import * as winston from 'winston';
+import { FileModel } from '../models/file-model';
+import * as request from 'request'
+import { EngineController } from './engine-controller';
 
 /**
 * A controller that deals with project models
@@ -14,9 +14,9 @@ export class FileController extends EngineController {
     constructor( server: modepress.IServer, config: modepress.IConfig, e: express.Express ) {
         super( [ modepress.Model.registerModel( FileModel ) ], server, config, e );
 
-        this.router.put( "/users/:user/files/:id", <any>[ modepress.canEdit, this.editFileDetails.bind( this ) ] );
-        this.router.get( "/users/:user/projects/:project/files", <any>[ modepress.canEdit, this.getByProject.bind( this ) ] );
-        this.router.get( "/users/:user/files", <any>[ modepress.canEdit, this.getByUser.bind( this ) ] );
+        this.router.put( '/users/:user/files/:id', <any>[ modepress.canEdit, this.editFileDetails.bind( this ) ] );
+        this.router.get( '/users/:user/projects/:project/files', <any>[ modepress.canEdit, this.getByProject.bind( this ) ] );
+        this.router.get( '/users/:user/files', <any>[ modepress.canEdit, this.getByUser.bind( this ) ] );
 
         let fileUploadedEvent: UsersInterface.SocketTokens.ClientInstructionType = 'FileUploaded';
         let fileRemovedEvent: UsersInterface.SocketTokens.ClientInstructionType = 'FileRemoved';
@@ -32,15 +32,15 @@ export class FileController extends EngineController {
     */
     protected editFileDetails( req: modepress.IAuthReq, res: express.Response, next: Function ) {
         res.setHeader( 'Content-Type', 'application/json' );
-        var model = this.getModel( "en-files" );
-        var that = this;
+        const model = this.getModel( 'en-files' );
+        const that = this;
 
         // Verify the resource ID
         if ( !modepress.isValidID( req.params.id ) )
-            return res.end( JSON.stringify( <modepress.IResponse>{ error: true, message: "Please use a valid resource ID" }) );
+            return res.end( JSON.stringify( <modepress.IResponse>{ error: true, message: 'Please use a valid resource ID' }) );
 
-        var searchToken: HatcheryServer.IFile = { _id: new mongodb.ObjectID( req.params.id ) };
-        var token: HatcheryServer.IResource = req.body;
+        const searchToken: HatcheryServer.IFile = { _id: new mongodb.ObjectID( req.params.id ) };
+        const token: HatcheryServer.IResource = req.body;
 
         model.update( searchToken, token ).then( function( instance ) {
             if ( instance.error ) {
@@ -57,8 +57,8 @@ export class FileController extends EngineController {
             }) );
 
         }).catch( function( error: Error ) {
-            winston.error( "Could not update file details: " + error.message, { process: process.pid });
-            res.end( JSON.stringify( <modepress.IResponse>{ error: true, message: "Could not update file details: " + error.message }) );
+            winston.error( 'Could not update file details: ' + error.message, { process: process.pid });
+            res.end( JSON.stringify( <modepress.IResponse>{ error: true, message: 'Could not update file details: ' + error.message }) );
         });
     }
 
@@ -70,9 +70,9 @@ export class FileController extends EngineController {
     * @param {number} verbose Weather or not to use verbose
     */
     private getFiles( query: any, index: number, limit: number, verbose: boolean = true ): Promise<ModepressAddons.IGetFiles> {
-        var model = this.getModel( "en-files" );
-        var that = this;
-        var count = 0;
+        const model = this.getModel( 'en-files' );
+        const that = this;
+        let count = 0;
 
         return new Promise<ModepressAddons.IGetFiles>( function( resolve, reject ) {
             // First get the count
@@ -81,8 +81,8 @@ export class FileController extends EngineController {
                 return model.findInstances<HatcheryServer.IFile>( query, [], index, limit );
 
             }).then( function( instances ) {
-                var sanitizedData: Array<HatcheryServer.IFile> = [];
-                for ( var i = 0, l = instances.length; i < l; i++ )
+                const sanitizedData: Array<HatcheryServer.IFile> = [];
+                for ( let i = 0, l = instances.length; i < l; i++ )
                     sanitizedData.push( instances[ i ].schema.getAsJson( instances[ i ]._id, { verbose: verbose }) );
 
                 return Promise.all( sanitizedData );
@@ -111,17 +111,17 @@ export class FileController extends EngineController {
         // Check for keywords
         if ( params.search ) {
             ( <any>query ).$or = [
-                { name: new RegExp( params.search, "i" ) },
-                { tags: { $in: [ new RegExp( params.search, "i" ) ] } }
+                { name: new RegExp( params.search, 'i' ) },
+                { tags: { $in: [ new RegExp( params.search, 'i' ) ] } }
             ];
         }
 
         // Check for favourites
-        if ( params.favourite && params.favourite.toLowerCase() == "true" )
+        if ( params.favourite && params.favourite.toLowerCase() === 'true' )
             query.favourite = true;
 
         // Check for global
-        if ( params.global && params.global.toLowerCase() == "true" )
+        if ( params.global && params.global.toLowerCase() === 'true' )
             query.global = true;
 
         // Check for bucket ID
@@ -140,12 +140,12 @@ export class FileController extends EngineController {
     protected getByProject( req: modepress.IAuthReq, res: express.Response, next: Function ) {
         res.setHeader( 'Content-Type', 'application/json' );
 
-        var project = req.params.project;
+        const project = req.params.project;
         if ( !modepress.isValidID( project ) )
-            return res.end( JSON.stringify( <modepress.IResponse>{ error: true, message: "Please use a valid project ID" }) );
+            return res.end( JSON.stringify( <modepress.IResponse>{ error: true, message: 'Please use a valid project ID' }) );
 
         // Create the query
-        var query: HatcheryServer.IFile = { projectId: new mongodb.ObjectID( project ), user: req._user.username, browsable: true };
+        const query: HatcheryServer.IFile = { projectId: new mongodb.ObjectID( project ), user: req._user.username, browsable: true };
         this.appendOptionalQueries( query, req.query );
 
         this.getFiles( query, parseInt( req.query.index ), parseInt( req.query.limit ) ).then( function( data ) {
@@ -170,7 +170,7 @@ export class FileController extends EngineController {
         res.setHeader( 'Content-Type', 'application/json' );
 
         // Create the query
-        var query: HatcheryServer.IFile = { user: req._user.username, browsable: true };
+        const query: HatcheryServer.IFile = { user: req._user.username, browsable: true };
         this.appendOptionalQueries( query, req.query );
 
         this.getFiles( query, parseInt( req.query.index ), parseInt( req.query.limit ) ).then( function( data ) {
@@ -190,14 +190,14 @@ export class FileController extends EngineController {
     * @param {UsersInterface.SocketTokens.IFileToken} token
     */
     private onFilesUploaded( token: UsersInterface.SocketTokens.IFileToken ) {
-        var model = this.getModel( "en-files" );
-        var file = token.file;
-        var promises: Array<Promise<modepress.ModelInstance<HatcheryServer.IFile>>> = [];
+        const model = this.getModel( 'en-files' );
+        const file = token.file;
+        const promises: Array<Promise<modepress.ModelInstance<HatcheryServer.IFile>>> = [];
 
 
         // Add an IFile reference for each file thats added
         // Check for file meta
-        var fileMeta: HatcheryServer.IFileMeta = file.meta;
+        const fileMeta: HatcheryServer.IFileMeta = file.meta;
 
         promises.push( model.createInstance<HatcheryServer.IFile>( <HatcheryServer.IFile>{
             bucketId: file.bucketId,
@@ -225,7 +225,7 @@ export class FileController extends EngineController {
     * @param {UsersInterface.SocketTokens.IFileToken} token
     */
     private onFilesRemoved( token: UsersInterface.SocketTokens.IFileToken ) {
-        var model = this.getModel( "en-files" );
+        const model = this.getModel( 'en-files' );
 
         model.deleteInstances( <HatcheryServer.IFile>{ identifier: token.file.identifier }).then( function( numRemoved: number ) {
             winston.info( `[${numRemoved}] Files have been removed`, { process: process.pid });

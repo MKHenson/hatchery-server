@@ -1,10 +1,10 @@
-﻿import * as express from "express";
-import * as modepress from "modepress-api";
-import * as winston from "winston";
-import * as mongodb from "mongodb";
-import { EngineController } from "./engine-controller";
-import { ProjectModel } from "../models/project-model";
-import { PermissionController } from "./permission-controller";
+﻿import * as express from 'express';
+import * as modepress from 'modepress-api';
+import * as winston from 'winston';
+import * as mongodb from 'mongodb';
+import { EngineController } from './engine-controller';
+import { ProjectModel } from '../models/project-model';
+import { PermissionController } from './permission-controller';
 
 /**
 * An abstract controller that deals with a general set of resources. This is usually sub-classed
@@ -29,8 +29,8 @@ export class ResourceController extends EngineController {
         this._resourceType = resourceType;
 
         // Get the project privilege controllers
-        var canRead = PermissionController.singleton.canReadProject.bind( PermissionController.singleton );
-        var canWrite = PermissionController.singleton.canWriteProject.bind( PermissionController.singleton );
+        const canRead = PermissionController.singleton.canReadProject.bind( PermissionController.singleton );
+        const canWrite = PermissionController.singleton.canWriteProject.bind( PermissionController.singleton );
 
         this.router.get( `/${resourceType}`, <any>[ modepress.isAdmin, this.getAll.bind( this ) ] );
         this.router.delete( `/users/:user/projects/:project/${resourceType}/:ids`, <any>[ modepress.canEdit, canWrite, this.removeResources.bind( this ) ] );
@@ -47,19 +47,19 @@ export class ResourceController extends EngineController {
     */
     protected create( req: modepress.IAuthReq, res: express.Response, next: Function ) {
         res.setHeader( 'Content-Type', 'application/json' );
-        var model = this._model;
-        var projectModel = this.getModel( "projects" );
-        var that = this;
+        const model = this._model;
+        const projectModel = this.getModel( 'projects' );
+        const that = this;
 
-        var newResource: HatcheryServer.IResource = req.body;
+        const newResource: HatcheryServer.IResource = req.body;
 
         // Set the user parameter
         newResource.user = req.params.user;
 
         // Check for the project and verify its valid
-        var project = req.params.project;
+        const project = req.params.project;
         if ( !modepress.isValidID( project ) )
-            return res.end( JSON.stringify( <modepress.IResponse>{ error: true, message: "Please use a valid project ID" }) );
+            return res.end( JSON.stringify( <modepress.IResponse>{ error: true, message: 'Please use a valid project ID' }) );
 
         // Valid project
         newResource.projectId = new mongodb.ObjectID( project );
@@ -93,20 +93,20 @@ export class ResourceController extends EngineController {
     */
     protected editResource( req: modepress.IAuthReq, res: express.Response, next: Function ) {
         res.setHeader( 'Content-Type', 'application/json' );
-        var model = this._model;
-        var that = this;
-        var project: string = req.params.project;
-        var id: string = req.params.id;
-        var updateToken: HatcheryServer.IResource = {};
-        var token: HatcheryServer.IResource = req.body;
+        const model = this._model;
+        const that = this;
+        const project: string = req.params.project;
+        const id: string = req.params.id;
+        const updateToken: HatcheryServer.IResource = {};
+        const token: HatcheryServer.IResource = req.body;
 
         // Verify the resource ID
         if ( !modepress.isValidID( id ) )
-            return res.end( JSON.stringify( <modepress.IResponse>{ error: true, message: "Please use a valid resource ID" }) );
+            return res.end( JSON.stringify( <modepress.IResponse>{ error: true, message: 'Please use a valid resource ID' }) );
 
         // Verify the project ID
         if ( !modepress.isValidID( project ) )
-            return res.end( JSON.stringify( <modepress.IResponse>{ error: true, message: "Please use a valid project ID" }) );
+            return res.end( JSON.stringify( <modepress.IResponse>{ error: true, message: 'Please use a valid project ID' }) );
 
         updateToken._id = new mongodb.ObjectID( id );
         updateToken.projectId = new mongodb.ObjectID( project );
@@ -141,27 +141,27 @@ export class ResourceController extends EngineController {
     */
     protected removeResources( req: modepress.IAuthReq, res: express.Response, next: Function ) {
         res.setHeader( 'Content-Type', 'application/json' );
-        var model = this._model;
-        var that = this;
-        var project: string = req.params.project;
-        var ids: string = req.params.ids;
-        var deleteToken: HatcheryServer.IResource = {};
+        const model = this._model;
+        const that = this;
+        const project: string = req.params.project;
+        const ids: string = req.params.ids;
+        const deleteToken: HatcheryServer.IResource = {};
 
         // Check for the project and verify its valid
         if ( !modepress.isValidID( project ) )
-            return res.end( JSON.stringify( <modepress.IResponse>{ error: true, message: "Please use a valid project ID" }) );
+            return res.end( JSON.stringify( <modepress.IResponse>{ error: true, message: 'Please use a valid project ID' }) );
 
         // Set the user parameter
         deleteToken.user = req.params.user;
 
         // If ids are provided - go through and remove each one
         if ( ids ) {
-            var idsArray = ids.split( "," );
+            const idsArray = ids.split( ',' );
 
             if ( idsArray.length > 0 ) {
                 ( <any>deleteToken ).$or = [];
 
-                for ( var i = 0, l = idsArray.length; i < l; i++ )
+                for ( let i = 0, l = idsArray.length; i < l; i++ )
                     if ( !modepress.isValidID( idsArray[ i ] ) )
                         return res.end( JSON.stringify( <modepress.IResponse>{ error: true, message: `ID '${idsArray[ i ]}' is not a valid ID` }) );
                     else
@@ -196,9 +196,9 @@ export class ResourceController extends EngineController {
     * @param {express.Response} res
     */
     protected getFromQuery( findToken: HatcheryServer.IResource, req: modepress.IAuthReq, res: express.Response ) {
-        var model = this._model;
-        var that = this;
-        var count = 0;
+        const model = this._model;
+        const that = this;
+        let count = 0;
 
         // First get the count
         model.count( findToken ).then( function( num ) {
@@ -206,8 +206,8 @@ export class ResourceController extends EngineController {
             return model.findInstances<HatcheryServer.IResource>( findToken, [], parseInt( req.query.index ), parseInt( req.query.limit ) );
 
         }).then( function( instances ) {
-            var sanitizedData: Array<HatcheryServer.IResource> = [];
-            for ( var i = 0, l = instances.length; i < l; i++ )
+            const sanitizedData: Array<HatcheryServer.IResource> = [];
+            for ( let i = 0, l = instances.length; i < l; i++ )
                 sanitizedData.push( instances[ i ].schema.getAsJson( instances[ i ]._id, { verbose: req._verbose }) );
 
             return Promise.all( sanitizedData );
@@ -257,12 +257,12 @@ export class ResourceController extends EngineController {
     */
     protected getResources( req: modepress.IAuthReq, res: express.Response, next: Function ) {
         res.setHeader( 'Content-Type', 'application/json' );
-        var findToken: HatcheryServer.IResource = {};
-        var project = req.params.project;
-        var id = req.params.id;
+        const findToken: HatcheryServer.IResource = {};
+        const project = req.params.project;
+        const id = req.params.id;
 
         if ( !modepress.isValidID( project ) )
-            return res.end( JSON.stringify( <modepress.IResponse>{ error: true, message: "Please use a valid project ID" }) );
+            return res.end( JSON.stringify( <modepress.IResponse>{ error: true, message: 'Please use a valid project ID' }) );
 
         if ( id && modepress.isValidID( id ) )
             findToken._id = new mongodb.ObjectID( id );
@@ -271,7 +271,7 @@ export class ResourceController extends EngineController {
 
         // Check for keywords
         if ( req.query.search )
-            findToken.name = <any>new RegExp( req.query.search, "i" );
+            findToken.name = <any>new RegExp( req.query.search, 'i' );
 
         this.getFromQuery( findToken, req, res );
     }

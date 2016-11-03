@@ -1,9 +1,9 @@
-﻿import * as mongodb from "mongodb";
-import * as express from "express";
-import * as bodyParser from "body-parser";
-import * as modepress from "modepress-api";
-import { UserDetailsModel } from "../models/user-details-model";
-import { ProjectModel } from "../models/project-model";
+﻿import * as mongodb from 'mongodb';
+import * as express from 'express';
+import * as bodyParser from 'body-parser';
+import * as modepress from 'modepress-api';
+import { UserDetailsModel } from '../models/user-details-model';
+import { ProjectModel } from '../models/project-model';
 
 /**
 * A controller that deals with project models
@@ -35,11 +35,11 @@ export class PermissionController extends modepress.Controller {
     * don't need to handle an response as the function does that for you.
     */
     canReadProject( req: modepress.IAuthReq, res: express.Response, next: Function ): Promise<boolean> {
-        var suppressNext = req._suppressNext;
-        var user = ( req._user ? req._user.username : null );
-        var project = req.params.project;
-        var that = this;
-        var query = {
+        const suppressNext = req._suppressNext;
+        const user = ( req._user ? req._user.username : null );
+        const project = req.params.project;
+        const that = this;
+        const query = {
             $or: [
                 { readPrivileges: { $in: [ user ] } },
                 { writePrivileges: { $in: [ user ] } },
@@ -53,7 +53,7 @@ export class PermissionController extends modepress.Controller {
                 res.setHeader( 'Content-Type', 'application/json' );
                 res.end( JSON.stringify( <modepress.IResponse>{
                     error: true,
-                    message: "Please login to make this call"
+                    message: 'Please login to make this call'
                 }) );
                 return resolve( false );
             }
@@ -85,11 +85,11 @@ export class PermissionController extends modepress.Controller {
     * don't need to handle an response as the function does that for you.
     */
     canWriteProject( req: modepress.IAuthReq, res: express.Response, next: Function ): Promise<boolean> {
-        var suppressNext = req._suppressNext;
-        var project = req.params.project;
-        var user = ( req._user ? req._user.username : null );
-        var that = this;
-        var query = {
+        const suppressNext = req._suppressNext;
+        const project = req.params.project;
+        const user = ( req._user ? req._user.username : null );
+        const that = this;
+        const query = {
             $or: [
                 { writePrivileges: { $in: [ req._user.username ] } },
                 { adminPrivileges: { $in: [ req._user.username ] } }
@@ -102,7 +102,7 @@ export class PermissionController extends modepress.Controller {
                 res.setHeader( 'Content-Type', 'application/json' );
                 res.end( JSON.stringify( <modepress.IResponse>{
                     error: true,
-                    message: "Please login to make this call"
+                    message: 'Please login to make this call'
                 }) );
                 return resolve( false );
             }
@@ -133,11 +133,11 @@ export class PermissionController extends modepress.Controller {
     * don't need to handle an response as the function does that for you.
     */
     canAdminProject( req: modepress.IAuthReq, res: express.Response, next: Function ): Promise<boolean> {
-        var suppressNext = req._suppressNext;
-        var project = req.params.project;
-        var that = this;
-        var user = ( req._user ? req._user.username : null );
-        var query = {
+        const suppressNext = req._suppressNext;
+        const project = req.params.project;
+        const that = this;
+        const user = ( req._user ? req._user.username : null );
+        const query = {
             adminPrivileges: { $in: [ req._user.username ] }
         };
 
@@ -147,7 +147,7 @@ export class PermissionController extends modepress.Controller {
                 res.setHeader( 'Content-Type', 'application/json' );
                 res.end( JSON.stringify( <modepress.IResponse>{
                     error: true,
-                    message: "Please login to make this call"
+                    message: 'Please login to make this call'
                 }) );
                 return resolve( false );
             }
@@ -176,13 +176,13 @@ export class PermissionController extends modepress.Controller {
     * @param {any} query
     * @param {modepress.IAuthReq} req
     * @param {Function} next
-    * @param {string} project Specify the project instead of get it from the req.parameters
+    * @param {string} p Specify the project instead of get it from the req.parameters
     */
-    checkProjectPrivilege( query: any, req: modepress.IAuthReq, project?: string ): Promise<boolean> {
-        var project: string = project || req.params.project;
-        var user = req.params.user;
-        var projectModel = this.getModel( "en-projects" );
-        var that = this;
+    checkProjectPrivilege( query: any, req: modepress.IAuthReq, p?: string ): Promise<boolean> {
+        const project: string = p || req.params.project;
+        const user = req.params.user;
+        const projectModel = this.getModel( 'en-projects' );
+        const that = this;
 
         return new Promise( function( resolve, reject ) {
 
@@ -190,21 +190,21 @@ export class PermissionController extends modepress.Controller {
                 return reject( new Error( `Project not specified` ) );
 
             if ( !modepress.isValidID( project ) )
-                return reject( new Error( "Please use a valid project ID" ) );
+                return reject( new Error( 'Please use a valid project ID' ) );
 
             // If an admin - then the user can manage the project
             if ( req._user.privileges < 3 )
                 return resolve( true );
 
             projectModel.count( <HatcheryServer.IProject>{ _id: new mongodb.ObjectID( project ), user: user }).then( function( count ) {
-                if ( count == 0 )
-                    throw new Error( "No project exists with that ID" );
+                if ( count === 0 )
+                    throw new Error( 'No project exists with that ID' );
 
                 return projectModel.count( query )
 
             }).then( function( count ) {
-                if ( count == 0 )
-                    throw new Error( "User does not have permissions for project" );
+                if ( count === 0 )
+                    throw new Error( 'User does not have permissions for project' );
                 else
                     return resolve( true );
 
@@ -223,18 +223,18 @@ export class PermissionController extends modepress.Controller {
         if ( user.privileges < 3 )
             return Promise.resolve( true );
 
-        var that = this;
+        const that = this;
 
         // Get the details
         return new Promise<boolean>( function( resolve, reject ) {
-            var userModel = that.getModel( "en-user-details" );
-            var projModel = that.getModel( "en-projects" );
-            var username = user.username;
-            var maxProjects = 0;
+            const userModel = that.getModel( 'en-user-details' );
+            const projModel = that.getModel( 'en-projects' );
+            const username = user.username;
+            let maxProjects = 0;
 
             userModel.findOne<HatcheryServer.IUserMeta>( <HatcheryServer.IUserMeta>{ user: username }).then( function( instance ): Promise<Error | number> {
                 if ( !instance )
-                    return Promise.reject<Error>( new Error( "Not found" ) );
+                    return Promise.reject<Error>( new Error( 'Not found' ) );
 
                 maxProjects = instance.dbEntry.maxProjects;
 

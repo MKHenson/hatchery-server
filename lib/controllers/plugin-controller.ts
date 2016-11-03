@@ -1,9 +1,9 @@
-import * as mongodb from "mongodb";
-import * as express from "express";
-import * as modepress from "modepress-api";
-import { PluginModel } from "../models/plugin-model";
-import * as winston from "winston";
-import { EngineController } from "./engine-controller";
+import * as mongodb from 'mongodb';
+import * as express from 'express';
+import * as modepress from 'modepress-api';
+import { PluginModel } from '../models/plugin-model';
+import * as winston from 'winston';
+import { EngineController } from './engine-controller';
 
 /**
 * A controller that deals with plugin models
@@ -18,10 +18,10 @@ export class PluginController extends EngineController {
     constructor( server: modepress.IServer, config: modepress.IConfig, e: express.Express ) {
         super( [ modepress.Model.registerModel( PluginModel ) ], server, config, e );
 
-        this.router.get( "/plugins/:id?", <any>[ modepress.getUser, this.getPlugins.bind( this ) ] );
-        this.router.delete( "/plugins/:id", <any>[ modepress.isAdmin, this.remove.bind( this ) ] );
-        this.router.post( "/plugins", <any>[ modepress.isAdmin, this.create.bind( this ) ] );
-        this.router.put( "/plugins/:id", <any>[ modepress.isAdmin, this.update.bind( this ) ] );
+        this.router.get( '/plugins/:id?', <any>[ modepress.getUser, this.getPlugins.bind( this ) ] );
+        this.router.delete( '/plugins/:id', <any>[ modepress.isAdmin, this.remove.bind( this ) ] );
+        this.router.post( '/plugins', <any>[ modepress.isAdmin, this.create.bind( this ) ] );
+        this.router.put( '/plugins/:id', <any>[ modepress.isAdmin, this.update.bind( this ) ] );
     }
 
     /**
@@ -32,15 +32,15 @@ export class PluginController extends EngineController {
     */
     private remove( req: express.Request, res: express.Response, next: Function ) {
         res.setHeader( 'Content-Type', 'application/json' );
-        var plugins = this.getModel( "en-plugins" );
+        const plugins = this.getModel( 'en-plugins' );
 
         plugins.deleteInstances( <HatcheryServer.IPlugin>{ _id: new mongodb.ObjectID( req.params.id ) }).then( function( numRemoved ) {
-            if ( numRemoved == 0 )
-                return Promise.reject( new Error( "Could not find a plugin with that ID" ) );
+            if ( numRemoved === 0 )
+                return Promise.reject( new Error( 'Could not find a plugin with that ID' ) );
 
             res.end( JSON.stringify( <modepress.IResponse>{
                 error: false,
-                message: "Plugin has been successfully removed"
+                message: 'Plugin has been successfully removed'
             }) );
 
         }).catch( function( error: Error ) {
@@ -60,13 +60,13 @@ export class PluginController extends EngineController {
     */
     private update( req: modepress.IAuthReq, res: express.Response, next: Function ) {
         res.setHeader( 'Content-Type', 'application/json' );
-        var model = this.getModel( "en-plugins" );
-        var that = this;
-        var pluginToken = <HatcheryServer.IPlugin>req.body;
+        const model = this.getModel( 'en-plugins' );
+        const that = this;
+        const pluginToken = <HatcheryServer.IPlugin>req.body;
         model.update<HatcheryServer.IPlugin>( <HatcheryServer.IPlugin>{ _id: new mongodb.ObjectID( req.params.id ) }, pluginToken ).then( function( data ) {
             res.end( JSON.stringify( <modepress.IResponse>{
                 error: false,
-                message: "Plugin Updated"
+                message: 'Plugin Updated'
             }) );
 
         }).catch( function( error: Error ) {
@@ -86,9 +86,9 @@ export class PluginController extends EngineController {
     */
     private create( req: modepress.IAuthReq, res: express.Response, next: Function ) {
         res.setHeader( 'Content-Type', 'application/json' );
-        var model = this.getModel( "en-plugins" );
-        var that = this;
-        var pluginToken = <HatcheryServer.IPlugin>req.body;
+        const model = this.getModel( 'en-plugins' );
+        const that = this;
+        const pluginToken = <HatcheryServer.IPlugin>req.body;
 
         pluginToken.author = req._user.username;
 
@@ -121,39 +121,39 @@ export class PluginController extends EngineController {
     */
     private getPlugins( req: modepress.IAuthReq, res: express.Response, next: Function ) {
         res.setHeader( 'Content-Type', 'application/json' );
-        var model = this.getModel( "en-plugins" );
-        var that = this;
-        var count = 0;
+        const model = this.getModel( 'en-plugins' );
+        const that = this;
+        let count = 0;
 
-        var findToken: HatcheryServer.IPlugin = {};
+        const findToken: HatcheryServer.IPlugin = {};
 
         if ( !req._isAdmin )
             findToken.isPublic = true;
 
-        var getContent: boolean = true;
+        let getContent: boolean = true;
         if ( req.query.minimal )
             getContent = false;
 
 
         if ( req.params.id ) {
             if ( !modepress.isValidID( req.params.id ) )
-                return res.end( JSON.stringify( <modepress.IResponse>{ error: true, message: "Please use a valid object ID" }) );
+                return res.end( JSON.stringify( <modepress.IResponse>{ error: true, message: 'Please use a valid object ID' }) );
 
             findToken._id = new mongodb.ObjectID( req.params.id );
         }
 
         // Check for keywords
         if ( req.query.search )
-            ( <HatcheryServer.IPlugin>findToken ).name = <any>new RegExp( req.query.search, "i" );
+            ( <HatcheryServer.IPlugin>findToken ).name = <any>new RegExp( req.query.search, 'i' );
 
         // First get the count
         model.count( findToken ).then( function( num ) {
             count = num;
-            return model.findInstances<HatcheryServer.IPlugin>( findToken, [], parseInt( req.query.index ), parseInt( req.query.limit ), ( getContent == false ? { html: 0 } : undefined ) );
+            return model.findInstances<HatcheryServer.IPlugin>( findToken, [], parseInt( req.query.index ), parseInt( req.query.limit ), ( getContent === false ? { html: 0 } : undefined ) );
 
         }).then( function( instances ) {
-            var sanitizedData = [];
-            for ( var i = 0, l = instances.length; i < l; i++ )
+            const sanitizedData = [];
+            for ( let i = 0, l = instances.length; i < l; i++ )
                 sanitizedData.push( instances[ i ].schema.getAsJson( instances[ i ]._id, { verbose: true }) );
 
             return Promise.all( sanitizedData );

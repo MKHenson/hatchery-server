@@ -1,7 +1,7 @@
-import * as mongodb from "mongodb";
-import * as express from "express";
-import * as bodyParser from "body-parser";
-import * as modepress from "modepress-api";
+import * as mongodb from 'mongodb';
+import * as express from 'express';
+import * as bodyParser from 'body-parser';
+import * as modepress from 'modepress-api';
 
 /**
 * A base controller for engine controllers
@@ -24,6 +24,6 @@ export class EngineController extends modepress.Controller {
         this.router.use( bodyParser.json( { type: 'application/vnd.api+json' }) );
 
         // Register the path
-        e.use( "/app-engine", this.router );
+        e.use( '/app-engine', this.router );
     }
 }
