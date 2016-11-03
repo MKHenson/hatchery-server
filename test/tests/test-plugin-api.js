@@ -36,7 +36,7 @@ describe( 'Testing plugin related functions', function() {
     it( 'should create a plugin if an admin', function( done ) {
         apiAgent
             .post( '/app-engine/plugins' ).set( 'Accept', 'application/json' ).expect( 200 ).expect( 'Content-Type', /json/ )
-            .send( { name: 'Dinosaurs', description: 'This is about dinosaurs', 'version': '0.0.1', plugins: [ '111111111111111111111111' ] })
+            .send( { name: 'Dinosaurs', description: 'This is about dinosaurs', 'versions': [ { 'version': '0.0.1', 'url': 'url' }], plugins: [ '111111111111111111111111' ] })
             .set( 'Cookie', header.variables().adminCookie )
             .end( function( err, res ) {
                 if ( err ) return done( err );
@@ -48,7 +48,10 @@ describe( 'Testing plugin related functions', function() {
                 test.number( res.body.data.plan ).is( 1 )
                 test.array( res.body.data.deployables ).isEmpty()
                 test.number( res.body.data.plan ).is( 1 )
-                test.string( res.body.data.version ).is( '0.0.1' )
+                test.array( res.body.data.versions )
+                test.number( res.body.data.versions.length ).is( 1 )
+                test.string( res.body.data.versions[ 0 ].version ).is( '0.0.1' )
+                test.string( res.body.data.versions[ 0 ].url ).is( 'url' )
                 test.bool( res.body.data.isPublic ).isFalse()
 
                 done();
