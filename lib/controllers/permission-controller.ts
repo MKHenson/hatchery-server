@@ -248,7 +248,7 @@ export class PermissionController extends modepress.Controller {
                 if ( numProjects < maxProjects )
                     return resolve( true );
                 else
-                    return Promise.reject( new Error( `You cannot create more projects on this plan. Please consider upgrading your account` ) );
+                    throw new Error( `You cannot create more projects on this plan. Please consider upgrading your account` );
 
             }).catch( function( err: Error ) {
                 return reject( err );

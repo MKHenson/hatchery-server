@@ -178,7 +178,7 @@ export class BuildController extends EngineController {
         return new Promise<any>( function( resolve, reject ) {
             model.update( <HatcheryServer.IBuild>{ _id: new mongodb.ObjectID( buildId ) }, <HatcheryServer.IBuild>{ projectId: new mongodb.ObjectID( projId ) }).then( function( instances ) {
                 if ( instances.error )
-                    return Promise.reject( new Error( "An error has occurred while linking the build with a project" ) );
+                    throw new Error( "An error has occurred while linking the build with a project" );
 
                 return resolve();
 
