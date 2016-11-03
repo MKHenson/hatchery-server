@@ -8,8 +8,7 @@
 
     }
 
-    export interface IResource
-    {
+    export interface IResource {
         name?: string;
         projectId?: any;
         user?: string;
@@ -22,8 +21,7 @@
     /**
     * The interface for working with scripts
     */
-    export interface IScript extends IResource
-    {
+    export interface IScript extends IResource {
         onEnter?: string;
         onInitialize?: string;
         onDispose?: string;
@@ -33,8 +31,7 @@
     /**
     * An interface that is used to describe the assets model
     */
-    export interface IAsset extends IResource
-    {
+    export interface IAsset extends IResource {
         className?: string;
         json?: Array<{ name: string; category: string; value: any; type: string; }>;
     }
@@ -42,24 +39,21 @@
     /**
     * An interface that is used to describe project behaviours
     */
-    export interface IContainer extends IResource
-    {
+    export interface IContainer extends IResource {
         json?: IContainerWorkspace;
     }
 
     /**
     * An interface that is used to describe project groups
     */
-    export interface IGroup extends IResource
-    {
+    export interface IGroup extends IResource {
         items?: Array<number>;
     }
 
     /**
     * An interface that is used to describe the plugin model
     */
-    export interface IPlugin
-    {
+    export interface IPlugin {
         name?: string;
         description?: string;
         url?: string;
@@ -77,8 +71,7 @@
     /**
     * An interface that is used to describe the project model
     */
-    export interface IProject
-    {
+    export interface IProject {
         name?: string;
         description?: string;
         image?: string;
@@ -107,8 +100,7 @@
     /**
     * An interface that is used to describe the user's engine details
     */
-    export interface IUserMeta
-    {
+    export interface IUserMeta {
         user?: string;
         bio?: string;
         image?: string;
@@ -122,8 +114,7 @@
     /**
     * An interface that is used to describe a project build
     */
-    export interface IBuild
-    {
+    export interface IBuild {
         name?: string;
         projectId?: any;
         user?: string;
@@ -147,16 +138,15 @@
     /**
     * An interface that is used to describe users files
     */
-    export interface IFile extends IResource
-    {
+    export interface IFile extends IResource {
         url?: string;
-        tags ?: Array<string>;
+        tags?: Array<string>;
         extension?: string;
-        previewUrl ?: string;
-        global ?: boolean;
+        previewUrl?: string;
+        global?: boolean;
         favourite?: boolean;
         browsable?: boolean;
-        size ?: number;
+        size?: number;
         bucketId?: string;
         bucketName?: string;
         identifier?: string;
@@ -165,14 +155,12 @@
     /**
     * An interface to describe the meta data we react to with file uploads
     */
-    export interface IFileMeta extends IResource
-    {
+    export interface IFileMeta extends IResource {
         browsable: boolean;
     }
 }
 
-declare module ModepressAddons
-{
+declare module ModepressAddons {
     export interface ICreateProject extends Modepress.IGetResponse<HatcheryServer.IProject> { }
     export interface ICreateResource<T> extends Modepress.IGetResponse<T> { }
     export interface ICreateAsset extends Modepress.IGetResponse<HatcheryServer.IAsset> { }
