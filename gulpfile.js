@@ -70,8 +70,8 @@ gulp.task( 'copy-dist', [ 'compile-typescript', 'generate-declarations' ], funct
         .pipe( gulp.dest( modepressPluginDir ) );
 });
 
-gulp.task( 'bump-patch', function() { return setup.bumpVersion( setup.bumpPatchNum, configFiles ) });
-gulp.task( 'bump-minor', function() { return setup.bumpVersion( setup.bumpMidNum, configFiles ) });
-gulp.task( 'bump-major', function() { return setup.bumpVersion( setup.bumpMajorNum, configFiles ) });
+gulp.task( 'bump-patch', function() { return utils.bumpVersion( utils.bumpPatchNum, configFiles ) });
+gulp.task( 'bump-minor', function() { return utils.bumpVersion( utils.bumpMidNum, configFiles ) });
+gulp.task( 'bump-major', function() { return utils.bumpVersion( utils.bumpMajorNum, configFiles ) });
 gulp.task( 'install', [ 'install-definitions' ] );
 gulp.task( 'build', [ 'copy-dist', 'lint-typescript' ] );
