@@ -6,9 +6,8 @@ import * as modepress from "modepress-api";
 /**
 * A base controller for engine controllers
 */
-export class EngineController extends modepress.Controller
-{
-    protected router : express.Router;
+export class EngineController extends modepress.Controller {
+    protected router: express.Router;
 
 	/**
 	* Creates a new instance of the controller
@@ -16,16 +15,15 @@ export class EngineController extends modepress.Controller
     * @param {IConfig} config The configuration options
     * @param {express.Express} e The express instance of this server
 	*/
-    constructor( models : Array<modepress.Model>, server: modepress.IServer, config: modepress.IConfig, e: express.Express)
-    {
-        super(models);
+    constructor( models: Array<modepress.Model>, server: modepress.IServer, config: modepress.IConfig, e: express.Express ) {
+        super( models );
 
         this.router = express.Router();
-        this.router.use(bodyParser.urlencoded({ 'extended': true }));
-        this.router.use(bodyParser.json());
-        this.router.use(bodyParser.json({ type: 'application/vnd.api+json' }));
+        this.router.use( bodyParser.urlencoded( { 'extended': true }) );
+        this.router.use( bodyParser.json() );
+        this.router.use( bodyParser.json( { type: 'application/vnd.api+json' }) );
 
         // Register the path
-        e.use("/app-engine", this.router);
+        e.use( "/app-engine", this.router );
     }
 }

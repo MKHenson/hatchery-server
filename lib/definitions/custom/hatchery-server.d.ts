@@ -58,10 +58,12 @@
         description?: string;
         url?: string;
         plan?: number;
-        deployables?: Array<string>;
+        versions?: Array<{
+            version?: string;
+            deployables?: Array<string>;
+        }>;
         image?: string;
         author?: string;
-        version?: string;
         createdOn?: number;
         lastModified?: number;
         isPublic?: boolean;
