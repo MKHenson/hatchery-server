@@ -3,7 +3,7 @@ Webinate's Hatchery Server is a series of endpoints and functions that are acces
 This implementation is built on top of Webinate's Modepress server. The engine backend is actually a plugin for a the software.
 Modepress, is created by Webinate and is used as a content management system which is accessible as a series of endpoints.
 
-* version 0.1.0
+* version 0.2.0
 
 ## Requirements
 

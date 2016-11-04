@@ -1,7 +1,14 @@
-declare module Engine
-{
-    export interface IResource
-    {
+﻿declare module HatcheryServer {
+
+    /**
+     * An interface for describing a container workspace
+     * The frontend project can extend this interface and flesh out its inner workings
+     */
+    export interface IContainerWorkspace {
+
+    }
+
+    export interface IResource {
         name?: string;
         projectId?: any;
         user?: string;
@@ -14,8 +21,7 @@ declare module Engine
     /**
     * The interface for working with scripts
     */
-    export interface IScript extends IResource
-    {
+    export interface IScript extends IResource {
         onEnter?: string;
         onInitialize?: string;
         onDispose?: string;
@@ -25,8 +31,7 @@ declare module Engine
     /**
     * An interface that is used to describe the assets model
     */
-    export interface IAsset extends IResource
-    {
+    export interface IAsset extends IResource {
         className?: string;
         json?: Array<{ name: string; category: string; value: any; type: string; }>;
     }
@@ -34,32 +39,31 @@ declare module Engine
     /**
     * An interface that is used to describe project behaviours
     */
-    export interface IContainer extends IResource
-    {
-        json?: string | any;
+    export interface IContainer extends IResource {
+        json?: IContainerWorkspace;
     }
 
     /**
     * An interface that is used to describe project groups
     */
-    export interface IGroup extends IResource
-    {
+    export interface IGroup extends IResource {
         items?: Array<number>;
     }
 
     /**
     * An interface that is used to describe the plugin model
     */
-    export interface IPlugin
-    {
+    export interface IPlugin {
         name?: string;
         description?: string;
         url?: string;
         plan?: number;
-        deployables?: Array<string>;
+        versions?: Array<{
+            version?: string;
+            deployables?: Array<string>;
+        }>;
         image?: string;
         author?: string;
-        version?: string;
         createdOn?: number;
         lastModified?: number;
         isPublic?: boolean;
@@ -69,12 +73,11 @@ declare module Engine
     /**
     * An interface that is used to describe the project model
     */
-    export interface IProject
-    {
+    export interface IProject {
         name?: string;
         description?: string;
         image?: string;
-        category?: string;
+        category?: number;
         subCategory?: string;
         public?: boolean;
         curFile?: string;
@@ -93,17 +96,16 @@ declare module Engine
         files?: Array<string>;
         createdOn?: number;
         lastModified?: number;
-        _id?: any;  
+        _id?: any;
     }
-    
+
     /**
     * An interface that is used to describe the user's engine details
     */
-    export interface IUserMeta
-    {
+    export interface IUserMeta {
         user?: string;
         bio?: string;
-        image?: any;
+        image?: string;
         plan?: number;
         website?: string;
         customerId?: string;
@@ -114,8 +116,7 @@ declare module Engine
     /**
     * An interface that is used to describe a project build
     */
-    export interface IBuild
-    {
+    export interface IBuild {
         name?: string;
         projectId?: any;
         user?: string;
@@ -134,21 +135,20 @@ declare module Engine
         lastModified?: number;
     }
 
-  
+
 
     /**
     * An interface that is used to describe users files
     */
-    export interface IFile extends IResource
-    {
+    export interface IFile extends IResource {
         url?: string;
-        tags ?: Array<string>;
+        tags?: Array<string>;
         extension?: string;
-        previewUrl ?: string;
-        global ?: boolean;
+        previewUrl?: string;
+        global?: boolean;
         favourite?: boolean;
         browsable?: boolean;
-        size ?: number;
+        size?: number;
         bucketId?: string;
         bucketName?: string;
         identifier?: string;
@@ -157,39 +157,37 @@ declare module Engine
     /**
     * An interface to describe the meta data we react to with file uploads
     */
-    export interface IFileMeta extends IResource
-    {
+    export interface IFileMeta extends IResource {
         browsable: boolean;
     }
 }
 
-declare module ModepressAddons
-{
-    export interface ICreateProject extends Modepress.IGetResponse<Engine.IProject> { }
+declare module ModepressAddons {
+    export interface ICreateProject extends Modepress.IGetResponse<HatcheryServer.IProject> { }
     export interface ICreateResource<T> extends Modepress.IGetResponse<T> { }
-    export interface ICreateAsset extends Modepress.IGetResponse<Engine.IAsset> { }
-    export interface ICreateBehaviour extends Modepress.IGetResponse<Engine.IContainer> { }
-    export interface ICreateFile extends Modepress.IGetResponse<Engine.IFile> { }
-    export interface ICreateGroup extends Modepress.IGetResponse<Engine.IGroup> { }
-    export interface ICreatePlugin extends Modepress.IGetResponse<Engine.IPlugin> { }
-    export interface ICreateBuild extends Modepress.IGetResponse<Engine.IBuild> { }
+    export interface ICreateAsset extends Modepress.IGetResponse<HatcheryServer.IAsset> { }
+    export interface ICreateBehaviour extends Modepress.IGetResponse<HatcheryServer.IContainer> { }
+    export interface ICreateFile extends Modepress.IGetResponse<HatcheryServer.IFile> { }
+    export interface ICreateGroup extends Modepress.IGetResponse<HatcheryServer.IGroup> { }
+    export interface ICreatePlugin extends Modepress.IGetResponse<HatcheryServer.IPlugin> { }
+    export interface ICreateBuild extends Modepress.IGetResponse<HatcheryServer.IBuild> { }
 
-    export interface IGetBuilds extends Modepress.IGetArrayResponse<Engine.IBuild> { }
-    export interface IGetProjects extends Modepress.IGetArrayResponse<Engine.IProject> { }
-    export interface IGetDetails extends Modepress.IGetResponse<Engine.IUserMeta> { }
-    export interface IGetBehaviours extends Modepress.IGetArrayResponse<Engine.IContainer> { }
-    export interface IGetFiles extends Modepress.IGetArrayResponse<Engine.IFile> { }
-    export interface IGetGroups extends Modepress.IGetArrayResponse<Engine.IGroup> { }
-    export interface IGetAssets extends Modepress.IGetArrayResponse<Engine.IAsset> { }
-    export interface IGetPlugins extends Modepress.IGetArrayResponse<Engine.IPlugin> { }
-    export interface IGetResources extends Modepress.IGetArrayResponse<Engine.IResource> { }
+    export interface IGetBuilds extends Modepress.IGetArrayResponse<HatcheryServer.IBuild> { }
+    export interface IGetProjects extends Modepress.IGetArrayResponse<HatcheryServer.IProject> { }
+    export interface IGetDetails extends Modepress.IGetResponse<HatcheryServer.IUserMeta> { }
+    export interface IGetBehaviours extends Modepress.IGetArrayResponse<HatcheryServer.IContainer> { }
+    export interface IGetFiles extends Modepress.IGetArrayResponse<HatcheryServer.IFile> { }
+    export interface IGetGroups extends Modepress.IGetArrayResponse<HatcheryServer.IGroup> { }
+    export interface IGetAssets extends Modepress.IGetArrayResponse<HatcheryServer.IAsset> { }
+    export interface IGetPlugins extends Modepress.IGetArrayResponse<HatcheryServer.IPlugin> { }
+    export interface IGetResources extends Modepress.IGetArrayResponse<HatcheryServer.IResource> { }
 }
 
-declare module "engine" {
-    export = Engine;
+declare module 'hatchery-server' {
+    export = HatcheryServer;
 }
 
-declare module "modepress-addons"
+declare module 'modepress-addons'
 {
     export = ModepressAddons;
 }
