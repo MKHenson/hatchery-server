@@ -97,7 +97,7 @@ declare module HatcheryServer {
         readPrivileges?: Array<string>;
         writePrivileges?: Array<string>;
         adminPrivileges?: Array<string>;
-        plugins?: Array<any>;
+        plugins?: Array<{ id: string; version: string; }>;
         files?: Array<string>;
         createdOn?: number;
         lastModified?: number;

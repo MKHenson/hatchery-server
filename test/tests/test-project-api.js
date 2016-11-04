@@ -9,7 +9,7 @@ describe( 'Testing project related functions', function() {
     it( 'should not create a project with an empty name', function( done ) {
         apiAgent
             .post( '/app-engine/projects' ).set( 'Accept', 'application/json' ).expect( 200 ).expect( 'Content-Type', /json/ )
-            .send( { name: '', description: '', plugins: [] })
+            .send( { name: '', description: '' })
             .set( 'Cookie', header.variables().georgeCookie )
             .end( function( err, res ) {
                 if ( err ) return done( err );
@@ -22,7 +22,7 @@ describe( 'Testing project related functions', function() {
     it( 'should catch untrimmed names as well', function( done ) {
         apiAgent
             .post( '/app-engine/projects' ).set( 'Accept', 'application/json' ).expect( 200 ).expect( 'Content-Type', /json/ )
-            .send( { name: '      ', description: '', plugins: [] })
+            .send( { name: '      ', description: '' })
             .set( 'Cookie', header.variables().georgeCookie )
             .end( function( err, res ) {
                 if ( err ) return done( err );
@@ -35,7 +35,7 @@ describe( 'Testing project related functions', function() {
     it( 'should not allowed html in names', function( done ) {
         apiAgent
             .post( '/app-engine/projects' ).set( 'Accept', 'application/json' ).expect( 200 ).expect( 'Content-Type', /json/ )
-            .send( { name: '<b></b>', description: '', plugins: [] })
+            .send( { name: '<b></b>', description: '' })
             .set( 'Cookie', header.variables().georgeCookie )
             .end( function( err, res ) {
                 if ( err ) return done( err );
@@ -48,7 +48,7 @@ describe( 'Testing project related functions', function() {
     it( 'should not allowed dangerous html in description', function( done ) {
         apiAgent
             .post( '/app-engine/projects' ).set( 'Accept', 'application/json' ).expect( 200 ).expect( 'Content-Type', /json/ )
-            .send( { name: 'Test project', description: '<script>hello</script><b>Hello world!</b>', plugins: [] })
+            .send( { name: 'Test project', description: '<script>hello</script><b>Hello world!</b>' })
             .set( 'Cookie', header.variables().georgeCookie )
             .end( function( err, res ) {
                 if ( err ) return done( err );
@@ -58,23 +58,10 @@ describe( 'Testing project related functions', function() {
             });
     }).timeout( 25000 )
 
-    it( 'should not be allowed with no plugins', function( done ) {
-        apiAgent
-            .post( '/app-engine/projects' ).set( 'Accept', 'application/json' ).expect( 200 ).expect( 'Content-Type', /json/ )
-            .send( { name: 'Test project', description: '<b>Hello world!</b>', plugins: [] })
-            .set( 'Cookie', header.variables().georgeCookie )
-            .end( function( err, res ) {
-                if ( err ) return done( err );
-                test.string( res.body.message ).is( 'You must select at least 1 item for plugins' )
-                test.bool( res.body.error ).isTrue()
-                done();
-            });
-    }).timeout( 25000 )
-
     it( 'should create a valid project', function( done ) {
         apiAgent
             .post( '/app-engine/projects' ).set( 'Accept', 'application/json' ).expect( 200 ).expect( 'Content-Type', /json/ )
-            .send( { name: 'Test project', description: '<b>Hello world!</b>', plugins: [ '111111111111111111111111' ] })
+            .send( { name: 'Test project', description: '<b>Hello world!</b>', plugins: [ { test: true }] })
             .set( 'Cookie', header.variables().georgeCookie )
             .end( function( err, res ) {
                 if ( err ) return done( err );
@@ -100,6 +87,7 @@ describe( 'Testing project related functions', function() {
                 test.array( res.body.data.writePrivileges ).isEmpty()
                 test.array( res.body.data.adminPrivileges ).isNotEmpty()
                 test.array( res.body.data.plugins ).isNotEmpty()
+                test.bool( res.body.data.plugins[ 0 ].test ).isTrue()
                 test.array( res.body.data.files ).isEmpty()
                 test.number( res.body.data.createdOn ).isNot( 0 )
                 test.number( res.body.data.lastModified ).isNot( 0 )
@@ -271,7 +259,7 @@ describe( 'Testing project related functions', function() {
     it( 'should create a temp project', function( done ) {
         apiAgent
             .post( '/app-engine/projects' ).set( 'Accept', 'application/json' ).expect( 200 ).expect( 'Content-Type', /json/ )
-            .send( { name: 'Test project 1', description: '<b>Hello world!</b>', plugins: [ '111111111111111111111111' ] })
+            .send( { name: 'Test project 1', description: '<b>Hello world!</b>' })
             .set( 'Cookie', header.variables().georgeCookie )
             .end( function( err, res ) {
                 if ( err )
@@ -317,7 +305,7 @@ describe( 'Testing project related functions', function() {
     it( 'should not allow george to create 6 projects', function( done ) {
         apiAgent
             .post( '/app-engine/projects' ).set( 'Accept', 'application/json' ).expect( 200 ).expect( 'Content-Type', /json/ )
-            .send( { name: 'Test project 1', description: '<b>Hello world!</b>', plugins: [ '111111111111111111111111' ] })
+            .send( { name: 'Test project 1', description: '<b>Hello world!</b>' })
             .set( 'Cookie', header.variables().georgeCookie )
             .end( function( err, res ) {
                 if ( err )
@@ -326,31 +314,31 @@ describe( 'Testing project related functions', function() {
 
         apiAgent
             .post( '/app-engine/projects' ).set( 'Accept', 'application/json' ).expect( 200 ).expect( 'Content-Type', /json/ )
-            .send( { name: 'Test project 2', description: '<b>Hello world!</b>', plugins: [ '111111111111111111111111' ] })
+            .send( { name: 'Test project 2', description: '<b>Hello world!</b>' })
             .set( 'Cookie', header.variables().georgeCookie )
             .end( function( err, res ) { if ( err ) return done( err ); });
 
         apiAgent
             .post( '/app-engine/projects' ).set( 'Accept', 'application/json' ).expect( 200 ).expect( 'Content-Type', /json/ )
-            .send( { name: 'Test project 3', description: '<b>Hello world!</b>', plugins: [ '111111111111111111111111' ] })
+            .send( { name: 'Test project 3', description: '<b>Hello world!</b>' })
             .set( 'Cookie', header.variables().georgeCookie )
             .end( function( err, res ) { if ( err ) return done( err ); });
 
         apiAgent
             .post( '/app-engine/projects' ).set( 'Accept', 'application/json' ).expect( 200 ).expect( 'Content-Type', /json/ )
-            .send( { name: 'Test project 4', description: '<b>Hello world!</b>', plugins: [ '111111111111111111111111' ] })
+            .send( { name: 'Test project 4', description: '<b>Hello world!</b>' })
             .set( 'Cookie', header.variables().georgeCookie )
             .end( function( err, res ) { if ( err ) return done( err ); });
 
         apiAgent
             .post( '/app-engine/projects' ).set( 'Accept', 'application/json' ).expect( 200 ).expect( 'Content-Type', /json/ )
-            .send( { name: 'Test project 5', description: '<b>Hello world!</b>', plugins: [ '111111111111111111111111' ] })
+            .send( { name: 'Test project 5', description: '<b>Hello world!</b>' })
             .set( 'Cookie', header.variables().georgeCookie )
             .end( function( err, res ) { if ( err ) return done( err ); });
 
         apiAgent
             .post( '/app-engine/projects' ).set( 'Accept', 'application/json' ).expect( 200 ).expect( 'Content-Type', /json/ )
-            .send( { name: 'Test project 6', description: '<b>Hello world!</b>', plugins: [ '111111111111111111111111' ] })
+            .send( { name: 'Test project 6', description: '<b>Hello world!</b>' })
             .set( 'Cookie', header.variables().georgeCookie )
             .end( function( err, res ) {
                 if ( err ) return done( err );

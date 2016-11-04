@@ -29,7 +29,7 @@ export class ProjectModel extends Model {
         this.defaultSchema.add( new SchemaFactory.textArray( 'readPrivileges', [] ) ).setSensitive( true );
         this.defaultSchema.add( new SchemaFactory.textArray( 'writePrivileges', [] ) ).setSensitive( true );
         this.defaultSchema.add( new SchemaFactory.textArray( 'adminPrivileges', [] ) ).setSensitive( true );
-        this.defaultSchema.add( new SchemaFactory.idArray( 'plugins', [], 1 ) );
+        this.defaultSchema.add( new SchemaFactory.json( 'plugins', {}) );
         this.defaultSchema.add( new SchemaFactory.textArray( 'files', [] ) ).setSensitive( true );
         this.defaultSchema.add( new SchemaFactory.date( 'createdOn' ) ).setIndexable( true );
         this.defaultSchema.add( new SchemaFactory.date( 'lastModified', undefined, true ) ).setIndexable( true );
