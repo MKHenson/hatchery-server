@@ -91,8 +91,8 @@ export class PermissionController extends modepress.Controller {
         const that = this;
         const query = {
             $or: [
-                { writePrivileges: { $in: [ req._user.username ] } },
-                { adminPrivileges: { $in: [ req._user.username ] } }
+                { writePrivileges: { $in: [ req._user!.username ] } },
+                { adminPrivileges: { $in: [ req._user!.username ] } }
             ]
         };
 
@@ -138,7 +138,7 @@ export class PermissionController extends modepress.Controller {
         const that = this;
         const user = ( req._user ? req._user.username : null );
         const query = {
-            adminPrivileges: { $in: [ req._user.username ] }
+            adminPrivileges: { $in: [ req._user!.username ] }
         };
 
         return new Promise( function( resolve, reject ) {
@@ -193,7 +193,7 @@ export class PermissionController extends modepress.Controller {
                 return reject( new Error( 'Please use a valid project ID' ) );
 
             // If an admin - then the user can manage the project
-            if ( req._user.privileges < 3 )
+            if ( req._user!.privileges < 3 )
                 return resolve( true );
 
             projectModel.count( <HatcheryServer.IProject>{ _id: new mongodb.ObjectID( project ), user: user }).then( function( count ) {
@@ -236,7 +236,7 @@ export class PermissionController extends modepress.Controller {
                 if ( !instance )
                     return Promise.reject<Error>( new Error( 'Not found' ) );
 
-                maxProjects = instance.dbEntry.maxProjects;
+                maxProjects = instance.dbEntry.maxProjects!;
 
                 // get number of projects
                 return projModel.count( <HatcheryServer.IProject>{ user: username });

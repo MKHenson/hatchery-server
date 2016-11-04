@@ -607,7 +607,7 @@ declare namespace Modepress {
     }
 
     export class Controller {
-        constructor( models: Array<Model> );
+        constructor( models: Array<Model> | null );
 
         /**
          * Called to initialize this controller and its related database objects

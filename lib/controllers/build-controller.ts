@@ -53,7 +53,7 @@ export class BuildController extends EngineController {
             return model.findInstances<HatcheryServer.IBuild>( findToken, [], parseInt( req.query.index ), parseInt( req.query.limit ) );
 
         }).then( function( instances ) {
-            const sanitizedData = [];
+            const sanitizedData: Promise<any>[] = [];
             for ( let i = 0, l = instances.length; i < l; i++ )
                 sanitizedData.push( instances[ i ].schema.getAsJson( instances[ i ]._id, { verbose: Boolean( req.query.verbose ) }) );
 

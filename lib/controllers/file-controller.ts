@@ -145,7 +145,7 @@ export class FileController extends EngineController {
             return res.end( JSON.stringify( <modepress.IResponse>{ error: true, message: 'Please use a valid project ID' }) );
 
         // Create the query
-        const query: HatcheryServer.IFile = { projectId: new mongodb.ObjectID( project ), user: req._user.username, browsable: true };
+        const query: HatcheryServer.IFile = { projectId: new mongodb.ObjectID( project ), user: req._user!.username, browsable: true };
         this.appendOptionalQueries( query, req.query );
 
         this.getFiles( query, parseInt( req.query.index ), parseInt( req.query.limit ) ).then( function( data ) {
@@ -170,7 +170,7 @@ export class FileController extends EngineController {
         res.setHeader( 'Content-Type', 'application/json' );
 
         // Create the query
-        const query: HatcheryServer.IFile = { user: req._user.username, browsable: true };
+        const query: HatcheryServer.IFile = { user: req._user!.username, browsable: true };
         this.appendOptionalQueries( query, req.query );
 
         this.getFiles( query, parseInt( req.query.index ), parseInt( req.query.limit ) ).then( function( data ) {

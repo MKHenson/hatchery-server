@@ -36,7 +36,7 @@ export class PluginController extends EngineController {
 
         plugins.deleteInstances( <HatcheryServer.IPlugin>{ _id: new mongodb.ObjectID( req.params.id ) }).then( function( numRemoved ) {
             if ( numRemoved === 0 )
-                return Promise.reject( new Error( 'Could not find a plugin with that ID' ) );
+                throw new Error( 'Could not find a plugin with that ID' );
 
             res.end( JSON.stringify( <modepress.IResponse>{
                 error: false,
@@ -90,7 +90,7 @@ export class PluginController extends EngineController {
         const that = this;
         const pluginToken = <HatcheryServer.IPlugin>req.body;
 
-        pluginToken.author = req._user.username;
+        pluginToken.author = req._user!.username;
 
         // Create the new plugin
         model.createInstance<ModepressAddons.ICreatePlugin>( pluginToken ).then( function( instance ) {
@@ -152,7 +152,7 @@ export class PluginController extends EngineController {
             return model.findInstances<HatcheryServer.IPlugin>( findToken, [], parseInt( req.query.index ), parseInt( req.query.limit ), ( getContent === false ? { html: 0 } : undefined ) );
 
         }).then( function( instances ) {
-            const sanitizedData = [];
+            const sanitizedData: Promise<any>[] = [];
             for ( let i = 0, l = instances.length; i < l; i++ )
                 sanitizedData.push( instances[ i ].schema.getAsJson( instances[ i ]._id, { verbose: true }) );
 

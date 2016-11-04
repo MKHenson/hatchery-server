@@ -60,7 +60,7 @@ export class ProjectController extends EngineController {
                     return resolve( toRet );
 
                 instances.forEach( function( val, index ) {
-                    buildCtrl.removeByProject( val._id, val.dbEntry.user ).then( function( numDeleted ) {
+                    buildCtrl.removeByProject( val._id, val.dbEntry.user! ).then( function( numDeleted ) {
                         return model.deleteInstances( <HatcheryServer.IProject>{ _id: val._id });
 
                     }).then( function( numDeleted ) {
@@ -134,7 +134,7 @@ export class ProjectController extends EngineController {
             return res.end( JSON.stringify( <modepress.IResponse>{ error: true, message: 'Please use a valid project ID' }) );
 
         updateToken._id = new mongodb.ObjectID( project );
-        updateToken.user = req._user.username;
+        updateToken.user = req._user!.username;
 
         model.update( updateToken, token ).then( function( instance ) {
             if ( instance.error ) {
@@ -179,7 +179,7 @@ export class ProjectController extends EngineController {
         }
 
         // Check all the validity promises. If any one of them is false, then there is something wrong.
-        Promise.all( validityPromises ).then( function( validityArray ) {
+        Promise.all( validityPromises ).then( function( validityArray ): Promise<modepress.IRemoveResponse | null> | null {
 
             for ( let i = 0, l = validityArray.length; i < l; i++ )
                 if ( !validityArray[ i ] )
@@ -228,13 +228,13 @@ export class ProjectController extends EngineController {
         const that = this;
 
         // User is passed from the authentication function
-        token.user = req._user.username;
-        token.adminPrivileges = [ req._user.username ];
+        token.user = req._user!.username;
+        token.adminPrivileges = [ req._user!.username! ];
         token.readPrivileges = [];
         token.writePrivileges = [];
 
         // Create build
-        buildCtrl.createBuild( req._user.username ).then( function( build ) {
+        buildCtrl.createBuild( req._user!.username! ).then( function( build ) {
             newBuild = build;
             token.build = newBuild._id;
             return projects.createInstance( token );
@@ -247,7 +247,7 @@ export class ProjectController extends EngineController {
 
         }).then( function() {
             // Make sure we're still in the limit
-            PermissionController.singleton.projectsWithinLimits( req._user ).then( function() {
+            PermissionController.singleton.projectsWithinLimits( req._user! ).then( function() {
                 return newProject.schema.getAsJson( newProject._id, { verbose: true });
 
             }).then( function( json ) {
@@ -261,7 +261,7 @@ export class ProjectController extends EngineController {
 
             }).catch( function( err: Error ) {
                 // Not in the limit - so remove the project and tell the user to upgrade
-                that.removeByIds( [ newProject._id ], req._user.username );
+                that.removeByIds( [ newProject._id ], req._user!.username! );
                 res.end( JSON.stringify( <modepress.IResponse>{ error: true, message: err.message }) );
             });
 
@@ -270,7 +270,7 @@ export class ProjectController extends EngineController {
 
             // Make sure any builds were removed if an error occurred
             if ( newBuild ) {
-                buildCtrl.removeByIds( [ newBuild._id.toString() ], req._user.username ).then( function() {
+                buildCtrl.removeByIds( [ newBuild._id.toString() ], req._user!.username! ).then( function() {
                     res.end( JSON.stringify( <modepress.IResponse>{ error: true, message: err.message }) );
 
                 }).catch( function( err: Error ) {
@@ -294,7 +294,7 @@ export class ProjectController extends EngineController {
             return model.findInstances<HatcheryServer.IProject>( query, [], parseInt( req.query.index ), parseInt( req.query.limit ) );
 
         }).then( function( instances ) {
-            const sanitizedData = [];
+            const sanitizedData: Promise<any>[] = [];
             for ( let i = 0, l = instances.length; i < l; i++ )
                 sanitizedData.push( instances[ i ].schema.getAsJson( instances[ i ]._id, { verbose: req._verbose }) );
 
