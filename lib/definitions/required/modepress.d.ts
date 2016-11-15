@@ -1,4 +1,5 @@
 declare namespace Modepress {
+
     /*
      * Base interface for all models
      */
@@ -14,6 +15,7 @@ declare namespace Modepress {
      * serialized
      */
     export interface ISchemaOptions {
+
         /**
          * If true, foreign keys will serialize their values
          */
@@ -94,13 +96,6 @@ declare namespace Modepress {
     export interface IRemoveResponse extends IResponse {
         itemsRemoved: Array<{ id: string; error: boolean; errorMsg: string; }>;
     }
-
-    export interface UpdateToken<T> { error: string | boolean; instance: ModelInstance<T> }
-
-    /*
-     * Describes a token returned from updating instances
-     */
-    export interface UpdateRequest<T> { error: boolean; tokens: Array<UpdateToken<T>> }
 
     /*
      * Describes the cache renders model
@@ -322,6 +317,16 @@ declare namespace Modepress {
         usersSocketApiKey: string;
     }
 
+    export interface IAuthReq extends Express.Request {
+        _isAdmin: boolean;
+        _verbose: boolean;
+        _user: UsersInterface.IUserEntry | null;
+        body: any;
+        headers: any;
+        params: any;
+        query: any;
+    }
+
     /**
      * A definition of each item in the model
      */
@@ -488,6 +493,13 @@ declare namespace Modepress {
          */
         public remove( val: SchemaItem<any> | string );
     }
+
+    export interface UpdateToken<T> { error: string | boolean; instance: ModelInstance<T> }
+
+    /*
+     * Describes a token returned from updating instances
+     */
+    export interface UpdateRequest<T> { error: boolean; tokens: Array<UpdateToken<T>> }
 
     /**
      * An instance of a model with its own unique schema and ID. The initial schema is a clone
@@ -659,10 +671,10 @@ declare namespace Modepress {
         hasPermission( user: UsersInterface.IUserEntry, level: number, existingUser?: string ): boolean;
 
         /**
-	     * Attempts to log a user in
+         * Attempts to log a user in
          * @param user The email or username
          * @param password The users password
-	     */
+         */
         login( user: string, password: string, remember: boolean ): Promise<UsersInterface.IAuthenticationResponse>;
 
         /**
@@ -905,15 +917,7 @@ declare namespace Modepress {
         listenerCount( type: string ): number;
     }
 
-    export interface IAuthReq extends Express.Request {
-        _isAdmin: boolean;
-        _verbose: boolean;
-        _user: UsersInterface.IUserEntry | null;
-        body: any;
-        headers: any;
-        params: any;
-        query: any;
-    }
+
 
     /**
      * Checks for an id parameter and that its a valid mongodb ID. Returns an error of type IResponse if no ID is detected, or its invalid
