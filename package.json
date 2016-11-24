@@ -1,6 +1,6 @@
 {
     "name": "hatchery-server",
-    "version": "0.2.1",
+    "version": "0.2.2",
     "description": "The server side code for PixelSwarm Hatchery",
     "main": "gulpfile.js",
     "author": "Mathew Henson",
