@@ -178,7 +178,20 @@ declare module ModepressAddons {
     export interface ICreateBuild extends Modepress.IGetResponse<HatcheryServer.IBuild> { }
 
     export interface IGetBuilds extends Modepress.IGetArrayResponse<HatcheryServer.IBuild> { }
+
+    /**
+     * Describes the format returned for the calls
+     * GET /projects                        - Returns an array of projects from all users (admin priviledges only)
+     * GET /users/:user/projects            - Returns an array of projects for a specific user (must have at least read priviledges)
+     */
     export interface IGetProjects extends Modepress.IGetArrayResponse<HatcheryServer.IProject> { }
+
+    /**
+     * Describes the format returned for the calls
+     * GET /users/:user/projects/:project   - Returns an array of projects for a specific user and ID (must have at least read priviledges)
+     */
+    export interface IGetProject extends Modepress.IGetResponse<HatcheryServer.IProject> { }
+
     export interface IGetDetails extends Modepress.IGetResponse<HatcheryServer.IUserMeta> { }
     export interface IGetBehaviours extends Modepress.IGetArrayResponse<HatcheryServer.IContainer> { }
     export interface IGetFiles extends Modepress.IGetArrayResponse<HatcheryServer.IFile> { }

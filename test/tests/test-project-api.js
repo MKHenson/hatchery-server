@@ -139,10 +139,9 @@ describe( 'Testing project related functions', function() {
             .set( 'Cookie', header.variables().georgeCookie )
             .end( function( err, res ) {
                 if ( err ) return done( err );
-                test.string( res.body.message ).is( 'Found 1 projects' )
+                test.string( res.body.message )
                 test.bool( res.body.error ).isFalse()
-                test.number( res.body.count ).is( 1 )
-                test.value( res.body.data[ 0 ].readPrivileges ).isUndefined()
+                test.value( res.body.data.readPrivileges ).isUndefined()
                 done();
             });
     }).timeout( 25000 )
@@ -153,10 +152,9 @@ describe( 'Testing project related functions', function() {
             .set( 'Cookie', header.variables().georgeCookie )
             .end( function( err, res ) {
                 if ( err ) return done( err );
-                test.string( res.body.message ).is( 'Found 1 projects' )
+                test.string( res.body.message )
                 test.bool( res.body.error ).isFalse()
-                test.number( res.body.count ).is( 1 )
-                test.array( res.body.data[ 0 ].readPrivileges ).isEmpty()
+                test.array( res.body.data.readPrivileges ).isEmpty()
                 done();
             });
     }).timeout( 25000 )

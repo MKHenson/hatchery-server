@@ -302,12 +302,22 @@ export class ProjectController extends EngineController {
 
         }).then( function( sanitizedData ) {
 
-            res.end( JSON.stringify( <ModepressAddons.IGetProjects>{
-                error: false,
-                count: count,
-                message: `Found ${count} projects`,
-                data: sanitizedData
-            }) );
+            if (query._id) {
+                res.end( JSON.stringify( <ModepressAddons.IGetProject>{
+                    error: false,
+                    message: `Found project '${query._id}'`,
+                    data: sanitizedData[0] || undefined
+                }) );
+            }
+            else {
+                res.end( JSON.stringify( <ModepressAddons.IGetProjects>{
+                    error: false,
+                    count: count,
+                    message: `Found ${count} projects`,
+                    data: sanitizedData
+                }) );
+            }
+
 
         }).catch( function( error: Error ) {
             winston.error( error.message, { process: process.pid });
