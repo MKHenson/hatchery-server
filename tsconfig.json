@@ -32,6 +32,6 @@
         "lib/models/project-model.ts",
         "lib/models/script-model.ts",
         "lib/models/user-details-model.ts",
-        "lib/app-engine.ts"
+        "lib/index.ts"
     ]
 }
