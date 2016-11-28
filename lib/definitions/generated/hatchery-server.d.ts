@@ -180,15 +180,15 @@ declare module ModepressAddons {
     export interface IGetBuilds extends Modepress.IGetArrayResponse<HatcheryServer.IBuild> { }
 
     /**
-     * Describes the format returned for the calls
+     * Describes the format returned for the calls to get projects
      * GET /projects                        - Returns an array of projects from all users (admin priviledges only)
      * GET /users/:user/projects            - Returns an array of projects for a specific user (must have at least read priviledges)
      */
     export interface IGetProjects extends Modepress.IGetArrayResponse<HatcheryServer.IProject> { }
 
     /**
-     * Describes the format returned for the calls
-     * GET /users/:user/projects/:project   - Returns an array of projects for a specific user and ID (must have at least read priviledges)
+     * Describes the format returned for getting a single project
+     * GET /users/:user/projects/:project   - Returns a single project for a specific user and ID (must have at least read priviledges)
      */
     export interface IGetProject extends Modepress.IGetResponse<HatcheryServer.IProject> { }
 
@@ -197,6 +197,17 @@ declare module ModepressAddons {
     export interface IGetFiles extends Modepress.IGetArrayResponse<HatcheryServer.IFile> { }
     export interface IGetGroups extends Modepress.IGetArrayResponse<HatcheryServer.IGroup> { }
     export interface IGetAssets extends Modepress.IGetArrayResponse<HatcheryServer.IAsset> { }
+
+    /**
+     * Describes the format returned for getting a single plugin
+     * GET /plugins/:id - Returns a single plugin
+     */
+    export interface IGetPlugin extends Modepress.IGetResponse<HatcheryServer.IPlugin> { }
+
+    /**
+     * Describes the format returned for the calls to get projects
+     * GET /plugins - Returns an array of plugins
+     */
     export interface IGetPlugins extends Modepress.IGetArrayResponse<HatcheryServer.IPlugin> { }
     export interface IGetResources extends Modepress.IGetArrayResponse<HatcheryServer.IResource> { }
 }
