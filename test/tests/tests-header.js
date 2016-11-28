@@ -36,6 +36,7 @@ function TestManager() {
         this.janeCookie = '',
         this.project = null,
         this.plugin = null,
+        this.plugin2 = null,
         this.totalProjects = 0,
         this.totalAssets = 0,
         this.totalContainers = 0,
