@@ -31,7 +31,7 @@ export class ProjectModel extends Model {
         this.defaultSchema.add( new SchemaFactory.textArray( 'adminPrivileges', [] ) ).setSensitive( true );
         this.defaultSchema.add( new SchemaFactory.json( 'plugins', {}) );
         this.defaultSchema.add( new SchemaFactory.textArray( 'files', [] ) ).setSensitive( true );
-        this.defaultSchema.add( new SchemaFactory.date( 'createdOn' ) ).setIndexable( true );
+        this.defaultSchema.add( new SchemaFactory.date( 'createdOn' ) ).setIndexable( true ).setReadOnly( true );
         this.defaultSchema.add( new SchemaFactory.date( 'lastModified', undefined, true ) ).setIndexable( true );
     }
 }
