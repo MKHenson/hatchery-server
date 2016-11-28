@@ -160,12 +160,21 @@ export class PluginController extends EngineController {
 
         }).then( function( sanitizedData ) {
 
-            res.end( JSON.stringify( <ModepressAddons.IGetPlugins>{
-                error: false,
-                count: count,
-                message: `Found ${count} plugins`,
-                data: sanitizedData
-            }) );
+            if ( findToken._id ) {
+                res.end( JSON.stringify( <ModepressAddons.IGetPlugin>{
+                    error: false,
+                    message: sanitizedData.length > 0 ? `Found plugin` : `No plugin found`,
+                    data: sanitizedData.length > 0 ? sanitizedData[0] : undefined
+                }) );
+            }
+            else {
+                res.end( JSON.stringify( <ModepressAddons.IGetPlugins>{
+                    error: false,
+                    count: count,
+                    message: `Found ${count} plugins`,
+                    data: sanitizedData
+                }) );
+            }
 
         }).catch( function( error: Error ) {
             winston.error( error.message, { process: process.pid });

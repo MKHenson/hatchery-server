@@ -305,8 +305,8 @@ export class ProjectController extends EngineController {
             if (query._id) {
                 res.end( JSON.stringify( <ModepressAddons.IGetProject>{
                     error: false,
-                    message: `Found project '${query._id}'`,
-                    data: sanitizedData[0] || undefined
+                    message: sanitizedData.length > 0 ? `Found project '${query._id}'` : 'No project found',
+                    data: sanitizedData.length > 0 ? sanitizedData[0] : undefined
                 }) );
             }
             else {
