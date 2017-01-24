@@ -110,9 +110,9 @@ export class UserDetailsController extends EngineController {
         const model = that.getModel( 'en-user-details' );
         const target = req.params.user;
 
-        model.findOne<HatcheryServer.IUserMeta>( <HatcheryServer.IUserMeta>{ user: target }).then( function( instance ): Promise<Error | Promise<HatcheryServer.IUserMeta>> {
+        model.findOne<HatcheryServer.IUserMeta>( <HatcheryServer.IUserMeta>{ user: target }).then( function( instance ) {
             if ( !instance )
-                return Promise.reject<Error>( new Error( 'User does not exist' ) );
+                throw new Error( 'User does not exist' );
 
             return instance.schema.getAsJson( instance._id, { verbose: req._verbose });
 
