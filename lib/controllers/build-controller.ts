@@ -33,12 +33,11 @@ export class BuildController extends EngineController {
     * @param {express.Response} res
     * @param {Function} next
     */
-    getBuilds( req: modepress.IAuthReq, res: express.Response, next: Function ) {
+    async getBuilds( req: modepress.IAuthReq, res: express.Response, next: Function ) {
         res.setHeader( 'Content-Type', 'application/json' );
         const target = req.params.user;
         const project = req.params.project;
         const model = this.getModel( 'en-builds' );
-        let totalMatches = 0;
 
         if ( !modepress.isValidID( project ) )
             return res.end( JSON.stringify( <modepress.IResponse>{ error: true, message: `Please use a valid project ID` }) );
@@ -48,51 +47,39 @@ export class BuildController extends EngineController {
         if ( req.params.id && modepress.isValidID( req.params.id ) )
             findToken._id = new mongodb.ObjectID( req.params.id );
 
-        model.count( findToken ).then( function( total ) {
-            totalMatches = total;
-            return model.findInstances<HatcheryServer.IBuild>( findToken, [], parseInt( req.query.index ), parseInt( req.query.limit ) );
+        try {
+            const total = await model.count( findToken );
+            const instances = await model.findInstances<HatcheryServer.IBuild>( findToken, [], parseInt( req.query.index ), parseInt( req.query.limit ) );
 
-        }).then( function( instances ) {
             const sanitizedData: Promise<any>[] = [];
             for ( let i = 0, l = instances.length; i < l; i++ )
                 sanitizedData.push( instances[ i ].schema.getAsJson( instances[ i ]._id, { verbose: Boolean( req.query.verbose ) }) );
 
-            return Promise.all( sanitizedData );
-
-        }).then( function( sanitizedData ) {
-
+            const results = await Promise.all( sanitizedData );
             return res.end( JSON.stringify( <ModepressAddons.IGetBuilds>{
                 error: false,
-                message: `Found [${totalMatches}] builds for user '${target}'`,
-                count: totalMatches,
-                data: sanitizedData
+                message: `Found [${total}] builds for user '${target}'`,
+                count: total,
+                data: results
             }) );
-
-        }).catch( function( err: Error ) {
+        }
+        catch ( err ) {
             winston.error( err.message, { process: process.pid });
             return res.end( JSON.stringify( <modepress.IResponse>{
                 error: true,
                 message: `Could not get builds for '${target}' : ${err.message}`
             }) );
-        });
+        }
     }
 
     /**
     * Creates a new build
     * @returns {Promise<Modepress.ModelInstance<HatcheryServer.IBuild>>}
     */
-    createBuild( username: string, project?: mongodb.ObjectID ): Promise<Modepress.ModelInstance<HatcheryServer.IBuild>> {
+    async createBuild( username: string, project?: mongodb.ObjectID ): Promise<Modepress.ModelInstance<HatcheryServer.IBuild>> {
         const model = this.getModel( 'en-builds' );
-
-        return new Promise<Modepress.ModelInstance<HatcheryServer.IBuild>>( function( resolve, reject ) {
-            model.createInstance( <HatcheryServer.IBuild>{ name: '', user: username, projectId: project }).then( function( instance ) {
-                return resolve( instance );
-
-            }).catch( function( err: Error ) {
-                winston.error( err.message, { process: process.pid });
-                return reject( err );
-            });
-        });
+        const instance = await model.createInstance( <HatcheryServer.IBuild>{ name: '', user: username, projectId: project });
+        return instance;
     }
 
     /**
@@ -101,7 +88,7 @@ export class BuildController extends EngineController {
     * @param {string} user The username of the user
     * @returns {Promise<number>}
     */
-    removeByIds( ids: Array<string>, user: string ): Promise<number> {
+    async removeByIds( ids: Array<string>, user: string ): Promise<number> {
         const model = this.getModel( 'en-builds' );
 
         const findToken: HatcheryServer.IBuild = { user: user };
@@ -112,15 +99,8 @@ export class BuildController extends EngineController {
         if ( $or.length > 0 )
             findToken[ '$or' ] = $or;
 
-        return new Promise<number>( function( resolve, reject ) {
-            model.deleteInstances( findToken ).then( function( numDeleted ) {
-                return resolve( numDeleted );
-
-            }).catch( function( err: Error ) {
-                winston.error( err.message, { process: process.pid });
-                return reject( err );
-            });
-        });
+        const numDeleted = await model.deleteInstances( findToken );
+        return numDeleted;
     }
 
     /**
@@ -128,18 +108,10 @@ export class BuildController extends EngineController {
     * @param {string} user The username of the user
     * @returns {Promise<number>}
     */
-    removeByUser( user: string ): Promise<number> {
+    async removeByUser( user: string ): Promise<number> {
         const model = this.getModel( 'en-builds' );
-
-        return new Promise<number>( function( resolve, reject ) {
-            model.deleteInstances( <HatcheryServer.IBuild>{ user: user }).then( function( instance ) {
-                return resolve( instance );
-
-            }).catch( function( err: Error ) {
-                winston.error( err.message, { process: process.pid });
-                return reject( err );
-            });
-        });
+        const instance = await model.deleteInstances( <HatcheryServer.IBuild>{ user: user });
+        return instance;
     }
 
     /**
@@ -148,39 +120,24 @@ export class BuildController extends EngineController {
     * @param {string} user The username of the user
     * @returns {Promise<number>}
     */
-    removeByProject( project: mongodb.ObjectID, user: string ): Promise<number> {
+    async removeByProject( project: mongodb.ObjectID, user: string ): Promise<number> {
         const model = this.getModel( 'en-builds' );
-
-        return new Promise<number>(( resolve, reject ) => {
-            model.deleteInstances( <HatcheryServer.IBuild>{ projectId: project, user: user }).then( function( instance ) {
-                return resolve( instance );
-
-            }).catch(( err: Error ) => {
-                winston.error( err.message, { process: process.pid });
-                return reject( err );
-            });
-        });
+        const instance = await model.deleteInstances( <HatcheryServer.IBuild>{ projectId: project, user: user });
+        return instance;
     }
 
     /**
     * Removes a build by its id
     * @returns {Promise<any>}
     */
-    linkProject( buildId: string, projId: string ): Promise<any> {
+    async linkProject( buildId: string, projId: string ) {
         const model = this.getModel( 'en-builds' );
+        const instances = await model.update( <HatcheryServer.IBuild>{ _id: new mongodb.ObjectID( buildId ) }, <HatcheryServer.IBuild>{ projectId: new mongodb.ObjectID( projId ) });
 
-        return new Promise<any>(( resolve, reject ) => {
-            model.update( <HatcheryServer.IBuild>{ _id: new mongodb.ObjectID( buildId ) }, <HatcheryServer.IBuild>{ projectId: new mongodb.ObjectID( projId ) }).then( function( instances ) {
-                if ( instances.error )
-                    throw new Error( 'An error has occurred while linking the build with a project' );
+        if ( instances.error )
+            throw new Error( 'An error has occurred while linking the build with a project' );
 
-                return resolve();
-
-            }).catch(( err: Error ) => {
-                winston.error( err.message, { process: process.pid });
-                return reject( err );
-            });
-        });
+        return instances;
     }
 
     /**
@@ -189,7 +146,7 @@ export class BuildController extends EngineController {
     * @param {express.Response} res
     * @param {Function} next
     */
-    protected edit( req: modepress.IAuthReq, res: express.Response, next: Function ) {
+    protected async edit( req: modepress.IAuthReq, res: express.Response, next: Function ) {
         res.setHeader( 'Content-Type', 'application/json' );
         const model = this.getModel( 'en-builds' );
         const project: string = req.params.project;
@@ -207,27 +164,24 @@ export class BuildController extends EngineController {
 
         search._id = new mongodb.ObjectID( id );
         search.projectId = new mongodb.ObjectID( project );
-        model.update( search, token ).then(( instance ) => {
-            if ( instance.error ) {
-                winston.error( <string>instance.tokens[ 0 ].error, { process: process.pid });
-                return res.end( JSON.stringify( <modepress.IResponse>{
-                    error: true,
-                    message: <string>instance.tokens[ 0 ].error
-                }) );
-            }
+        try {
+            const instance = await model.update( search, token );
+
+            if ( instance.error )
+                throw new Error( <string>instance.tokens[ 0 ].error );
 
             res.end( JSON.stringify( <modepress.IResponse>{
                 error: false,
                 message: `[${instance.tokens.length}] Build updated`
             }) );
-
-        }).catch(( error: Error ) => {
+        }
+        catch ( error ) {
             winston.error( error.message, { process: process.pid });
             res.end( JSON.stringify( <modepress.IResponse>{
                 error: true,
                 message: error.message
             }) );
-        });
+        }
     }
 
     /**
@@ -236,7 +190,7 @@ export class BuildController extends EngineController {
     * @param {express.Response} res
     * @param {Function} next
     */
-    create( req: modepress.IAuthReq, res: express.Response, next: Function ) {
+    async create( req: modepress.IAuthReq, res: express.Response, next: Function ) {
         res.setHeader( 'Content-Type', 'application/json' );
         const target = req.params.user;
         const project = req.params.project;
@@ -246,34 +200,17 @@ export class BuildController extends EngineController {
         if ( !modepress.isValidID( project ) )
             return res.end( JSON.stringify( <ModepressAddons.IGetBuilds>{ error: true, message: `Please use a valid project ID` }) );
 
-        let newBuild: modepress.ModelInstance<HatcheryServer.IBuild>;
-
-
-
-        this.createBuild( target, new mongodb.ObjectID( project ) ).then(( instance ) => {
-
-            newBuild = instance;
-            let toRet: Promise<Modepress.UpdateRequest<HatcheryServer.IProject>>;
+        try {
+            const instance = await this.createBuild( target, new mongodb.ObjectID( project ) );
 
             if ( setAsCurrent ) {
-                const m = this.getModel( 'en-projects' )
-                toRet = m.update<HatcheryServer.IProject>( <HatcheryServer.IProject>{
-                    _id: new mongodb.ObjectID( project )
-                }, { build: instance._id });
+                const projectModel = this.getModel( 'en-projects' )
+                const token = await projectModel.update<HatcheryServer.IProject>( <HatcheryServer.IProject>{ _id: new mongodb.ObjectID( project ) }, { build: instance._id });
+                if ( token.error )
+                    throw new Error( <string>token.tokens[ 0 ].error );
             }
-            else
-                toRet = Promise.resolve( <Modepress.UpdateRequest<HatcheryServer.IProject>>{ error: false, tokens: [] });
 
-            return toRet;
-
-        }).then(( updateToken ): Promise<Error | HatcheryServer.IBuild> => {
-
-            if ( updateToken.error )
-                return Promise.reject<Error>( new Error( <string>updateToken.tokens[ 0 ].error ) );
-
-            return newBuild.schema.getAsJson<HatcheryServer.IBuild>( newBuild._id, { verbose: true });
-
-        }).then(( sanitizedData: HatcheryServer.IBuild ) => {
+            const sanitizedData = await instance.schema.getAsJson<HatcheryServer.IBuild>( instance._id, { verbose: true });
 
             return res.end( JSON.stringify( <ModepressAddons.IGetBuilds>{
                 error: false,
@@ -281,13 +218,13 @@ export class BuildController extends EngineController {
                 count: 1,
                 data: sanitizedData
             }) );
-
-        }).catch(( err: Error ) => {
+        }
+        catch ( err ) {
             winston.error( err.message, { process: process.pid });
             return res.end( JSON.stringify( <modepress.IResponse>{
                 error: true,
                 message: `Could not create build for '${target}' : ${err.message}`
             }) );
-        });
+        }
     }
 }

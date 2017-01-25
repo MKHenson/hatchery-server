@@ -36,14 +36,15 @@ export class UserDetailsController extends EngineController {
     * Called whenever a user has had their account removed
     * @param {UsersInterface.SocketTokens.IUserToken} token
     */
-    private onRemoved( token: UsersInterface.SocketTokens.IUserToken ) {
+    private async onRemoved( token: UsersInterface.SocketTokens.IUserToken ) {
         const model = this.getModel( 'en-user-details' );
-        model.deleteInstances( <HatcheryServer.IUserMeta>{ user: token.username }).then( function() {
+        try {
+            await model.deleteInstances( <HatcheryServer.IUserMeta>{ user: token.username });
             winston.info( `User details for ${token.username} have been deleted`, { process: process.pid });
-
-        }).catch( function( err: Error ) {
+        }
+        catch ( err ) {
             winston.error( `An error occurred while deleteing user details for ${token.username} : ${err.message}`, { process: process.pid });
-        });
+        };
     }
 
     /**
@@ -52,49 +53,46 @@ export class UserDetailsController extends EngineController {
     * @param {express.Response} res
     * @param {Function} next
     */
-    private updateDetails( req: modepress.IAuthReq, res: express.Response, next: Function ) {
+    private async updateDetails( req: modepress.IAuthReq, res: express.Response, next: Function ) {
         res.setHeader( 'Content-Type', 'application/json' );
         const model = this.getModel( 'en-user-details' );
-        const that = this;
         const user: string = req.params.user;
         const updateToken: HatcheryServer.IUserMeta = { user: user };
         const token: HatcheryServer.IUserMeta = req.body;
 
-        model.update( updateToken, token ).then( function( instance ) {
-            if ( instance.error ) {
-                winston.error( <string>instance.tokens[ 0 ].error, { process: process.pid });
-                return res.end( JSON.stringify( <modepress.IResponse>{
-                    error: true,
-                    message: <string>instance.tokens[ 0 ].error
-                }) );
-            }
+        try {
+            const instance = await model.update( updateToken, token );
+
+            if ( instance.error )
+                throw new Error(<string>instance.tokens[ 0 ].error);
 
             res.end( JSON.stringify( <modepress.IResponse>{
                 error: false,
                 message: `Details updated`
             }) );
-
-        }).catch( function( error: Error ) {
+        }
+        catch ( error ) {
             winston.error( error.message, { process: process.pid });
             res.end( JSON.stringify( <modepress.IResponse>{
                 error: true,
                 message: error.message
             }) );
-        });
+        };
     }
 
     /**
     * Called whenever a user has activated their account. We setup their app engine specific details
     * @param {UsersInterface.SocketTokens.IUserToken} token
     */
-    private onActivated( token: UsersInterface.SocketTokens.IUserToken ) {
+    private async onActivated( token: UsersInterface.SocketTokens.IUserToken ) {
         const model = this.getModel( 'en-user-details' );
-        model.createInstance( <HatcheryServer.IUserMeta>{ user: token.username }).then( function( instance ) {
+        try {
+            const instance = await model.createInstance( <HatcheryServer.IUserMeta>{ user: token.username });
             winston.info( `Created user details for ${token.username}`, { process: process.pid });
-
-        }).catch( function( err: Error ) {
+        }
+        catch ( err ) {
             winston.error( `An error occurred while creating creating user details for ${token.username} : ${err.message}`, { process: process.pid });
-        });
+        };
     }
 
     /**
@@ -103,34 +101,33 @@ export class UserDetailsController extends EngineController {
     * @param {express.Response} res
     * @param {Function} next
     */
-    getDetails( req: modepress.IAuthReq, res: express.Response, next: Function ) {
-        const that = this;
+    async getDetails( req: modepress.IAuthReq, res: express.Response, next: Function ) {
+
         res.setHeader( 'Content-Type', 'application/json' );
 
-        const model = that.getModel( 'en-user-details' );
+        const model = this.getModel( 'en-user-details' );
         const target = req.params.user;
 
-        model.findOne<HatcheryServer.IUserMeta>( <HatcheryServer.IUserMeta>{ user: target }).then( function( instance ) {
+        try {
+            const instance = await model.findOne<HatcheryServer.IUserMeta>( <HatcheryServer.IUserMeta>{ user: target });
             if ( !instance )
                 throw new Error( 'User does not exist' );
 
-            return instance.schema.getAsJson( instance._id, { verbose: req._verbose });
-
-        }).then( function( json ) {
+            const json = await instance.schema.getAsJson( instance._id, { verbose: req._verbose });
 
             return res.end( JSON.stringify( <ModepressAddons.IGetDetails>{
                 error: false,
                 message: `Found details for user '${target}'`,
                 data: json
             }) );
-
-        }).catch( function( err: Error ) {
+        }
+        catch ( err ) {
             winston.error( err.message, { process: process.pid });
             return res.end( JSON.stringify( <modepress.IResponse>{
                 error: true,
                 message: `Could not find details for target '${target}' : ${err.message}`
             }) );
-        });
+        }
     }
 
     /**
@@ -139,10 +136,13 @@ export class UserDetailsController extends EngineController {
     * @param {express.Response} res
     * @param {Function} next
     */
-    createDetails( req: modepress.IAuthReq, res: express.Response, next: Function ) {
-        const that = this;
+    async createDetails( req: modepress.IAuthReq, res: express.Response, next: Function ) {
+
         res.setHeader( 'Content-Type', 'application/json' );
-        modepress.UsersService.getSingleton().getUser( req.params.target, req ).then( function( getReq ) {
+        try {
+
+            const getReq = await modepress.UsersService.getSingleton().getUser( req.params.target, req );
+
             if ( getReq.error )
                 return res.end( JSON.stringify( <modepress.IResponse>{ error: true, message: getReq.message }) );
 
@@ -151,7 +151,7 @@ export class UserDetailsController extends EngineController {
             if ( !user )
                 return res.end( JSON.stringify( <modepress.IResponse>{ error: true, message: `No user exists with the name '${req.params.target}'` }) );
 
-            const model = that.getModel( 'en-user-details' );
+            const model = this.getModel( 'en-user-details' );
 
             // User exists and is ok - so lets create their details
             model.createInstance( <HatcheryServer.IUserMeta>{ user: user.username }).then( function( instance ) {
@@ -167,13 +167,13 @@ export class UserDetailsController extends EngineController {
                     message: `Could not create user details for target ${user.username} : ${err.message}`
                 }) );
             });
-
-        }).catch( function( err: Error ) {
+        }
+        catch ( err ) {
             winston.error( err.message, { process: process.pid });
             res.end( JSON.stringify( <modepress.IResponse>{
                 error: true,
                 message: err.message
             }) );
-        })
+        }
     }
 }

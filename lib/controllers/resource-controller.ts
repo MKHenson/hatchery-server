@@ -45,11 +45,10 @@ export class ResourceController extends EngineController {
     * @param {express.Response} res
     * @param {Function} next
     */
-    protected create( req: modepress.IAuthReq, res: express.Response, next: Function ) {
+    protected async create( req: modepress.IAuthReq, res: express.Response, next: Function ) {
         res.setHeader( 'Content-Type', 'application/json' );
         const model = this._model;
         const projectModel = this.getModel( 'projects' );
-        const that = this;
 
         const newResource: HatcheryServer.IResource = req.body;
 
@@ -64,25 +63,25 @@ export class ResourceController extends EngineController {
         // Valid project
         newResource.projectId = new mongodb.ObjectID( project );
 
-        // Save it in the DB
-        model.createInstance<HatcheryServer.IResource>( newResource ).then( function( instance ) {
-            return instance.schema.getAsJson( instance._id, { verbose: true });
+        try {
 
-        }).then( function( json ) {
+            // Save it in the DB
+            const instance = await model.createInstance<HatcheryServer.IResource>( newResource );
+            const json = await instance.schema.getAsJson( instance._id, { verbose: true });
 
             return res.end( JSON.stringify( <ModepressAddons.ICreateResource<any>>{
                 error: false,
                 message: `New resource '${newResource.name}' created`,
                 data: json
             }) );
-
-        }).catch( function( err: Error ) {
+        }
+        catch ( err ) {
             winston.error( err.message, { process: process.pid });
             return res.end( JSON.stringify( <modepress.IResponse>{
                 error: true,
                 message: err.message
             }) );
-        });
+        };
     }
 
     /**
@@ -91,10 +90,9 @@ export class ResourceController extends EngineController {
     * @param {express.Response} res
     * @param {Function} next
     */
-    protected editResource( req: modepress.IAuthReq, res: express.Response, next: Function ) {
+    protected async editResource( req: modepress.IAuthReq, res: express.Response, next: Function ) {
         res.setHeader( 'Content-Type', 'application/json' );
         const model = this._model;
-        const that = this;
         const project: string = req.params.project;
         const id: string = req.params.id;
         const updateToken: HatcheryServer.IResource = {};
@@ -110,27 +108,25 @@ export class ResourceController extends EngineController {
 
         updateToken._id = new mongodb.ObjectID( id );
         updateToken.projectId = new mongodb.ObjectID( project );
-        model.update( updateToken, token ).then( function( instance ) {
-            if ( instance.error ) {
-                winston.error( <string>instance.tokens[ 0 ].error, { process: process.pid });
-                return res.end( JSON.stringify( <modepress.IResponse>{
-                    error: true,
-                    message: <string>instance.tokens[ 0 ].error
-                }) );
-            }
+
+        try {
+            const instance = await model.update( updateToken, token );
+
+            if ( instance.error )
+                throw new Error( <string>instance.tokens[ 0 ].error );
 
             res.end( JSON.stringify( <modepress.IResponse>{
                 error: false,
                 message: `[${instance.tokens.length}] Resources updated`
             }) );
-
-        }).catch( function( error: Error ) {
+        }
+        catch ( error ) {
             winston.error( error.message, { process: process.pid });
             res.end( JSON.stringify( <modepress.IResponse>{
                 error: true,
                 message: error.message
             }) );
-        });
+        };
     }
 
     /**
@@ -139,10 +135,9 @@ export class ResourceController extends EngineController {
     * @param {express.Response} res
     * @param {Function} next
     */
-    protected removeResources( req: modepress.IAuthReq, res: express.Response, next: Function ) {
+    protected async removeResources( req: modepress.IAuthReq, res: express.Response, next: Function ) {
         res.setHeader( 'Content-Type', 'application/json' );
         const model = this._model;
-        const that = this;
         const project: string = req.params.project;
         const ids: string = req.params.ids;
         const deleteToken: HatcheryServer.IResource = {};
@@ -170,72 +165,68 @@ export class ResourceController extends EngineController {
         }
 
         // Delete the instances based onthe token
-        model.deleteInstances( deleteToken ).then( function( numRemoved ) {
+        try {
+            const numRemoved = await model.deleteInstances( deleteToken );
             res.end( JSON.stringify( <modepress.IResponse>{
                 error: false,
                 message: `[${numRemoved}] resources have been removed`
             }) );
-
-        }).catch( function( error: Error ) {
+        }
+        catch ( error ) {
             winston.error( error.message, { process: process.pid });
             res.end( JSON.stringify( <modepress.IResponse>{
                 error: true,
                 message: error.message
             }) );
-        });
+        };
     }
 
     /**
     * Given a find query, returns all resources.
     * Optional query parameters:
-    *   {number} index The start index from where to fetch resources
-    *   {number} limit The number of entries to be returned in the call
-    *   {boolean} verbose If true, all information is returned. If false, then only public non-sensitive data
+    * {number} index The start index from where to fetch resources
+    * {number} limit The number of entries to be returned in the call
+    * {boolean} verbose If true, all information is returned. If false, then only public non-sensitive data
     * @param {HatcheryServer.IResource} findToken
     * @param {express.Request} req
     * @param {express.Response} res
     */
-    protected getFromQuery( findToken: HatcheryServer.IResource, req: modepress.IAuthReq, res: express.Response ) {
+    protected async getFromQuery( findToken: HatcheryServer.IResource, req: modepress.IAuthReq, res: express.Response ) {
         const model = this._model;
-        const that = this;
-        let count = 0;
 
-        // First get the count
-        model.count( findToken ).then( function( num ) {
-            count = num;
-            return model.findInstances<HatcheryServer.IResource>( findToken, [], parseInt( req.query.index ), parseInt( req.query.limit ) );
+        try {
+            // First get the count
+            const num = await model.count( findToken );
+            const instances = await model.findInstances<HatcheryServer.IResource>( findToken, [], parseInt( req.query.index ), parseInt( req.query.limit ) );
 
-        }).then( function( instances ) {
             const sanitizedData: Array<HatcheryServer.IResource> = [];
             for ( let i = 0, l = instances.length; i < l; i++ )
                 sanitizedData.push( instances[ i ].schema.getAsJson( instances[ i ]._id, { verbose: req._verbose }) );
 
-            return Promise.all( sanitizedData );
-
-        }).then( function( sanitizedData ) {
+            const results = await Promise.all( sanitizedData );
 
             return res.end( JSON.stringify( <ModepressAddons.IGetResources>{
                 error: false,
-                count: count,
-                message: `Found ${count} ${that._resourceType}`,
-                data: sanitizedData
+                count: num,
+                message: `Found ${num} ${this._resourceType}`,
+                data: results
             }) );
-
-        }).catch( function( error: Error ) {
+        }
+        catch ( error ) {
             winston.error( error.message, { process: process.pid });
             return res.end( JSON.stringify( <modepress.IResponse>{
                 error: true,
                 message: error.message
             }) );
-        });
+        };
     }
 
     /**
     * Gets all resources of a given type. Only available for admin calls
     * Optional query parameters:
-    *   {number} index The start index from where to fetch resources
-    *   {number} limit The number of entries to be returned in the call
-    *   {boolean} verbose If true, all information is returned. If false, then only public non-sensitive data
+    * {number} index The start index from where to fetch resources
+    * {number} limit The number of entries to be returned in the call
+    * {boolean} verbose If true, all information is returned. If false, then only public non-sensitive data
     * @param {express.Request} req
     * @param {express.Response} res
     * @param {Function} next
@@ -248,9 +239,9 @@ export class ResourceController extends EngineController {
     /**
     * Returns a single/array of resource items
     * Optional query parameters:
-    *   {number} index The start index from where to fetch resources
-    *   {number} limit The number of entries to be returned in the call
-    *   {boolean} verbose If true, all information is returned. If false, then only public non-sensitive data
+    * {number} index The start index from where to fetch resources
+    * {number} limit The number of entries to be returned in the call
+    * {boolean} verbose If true, all information is returned. If false, then only public non-sensitive data
     * @param {express.Request} req
     * @param {express.Response} res
     * @param {Function} next
