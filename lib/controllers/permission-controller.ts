@@ -34,11 +34,10 @@ export class PermissionController extends modepress.Controller {
     * @returns {Promise<boolean>} Returns a promise of true or false if the user can read a project. If false, you
     * don't need to handle an response as the function does that for you.
     */
-    canReadProject( req: modepress.IAuthReq, res: express.Response, next: Function ): Promise<boolean> {
+    async canReadProject( req: modepress.IAuthReq, res: express.Response, next: Function ): Promise<boolean> {
         const suppressNext = req._suppressNext;
         const user = ( req._user ? req._user.username : null );
         const project = req.params.project;
-        const that = this;
         const query = {
             $or: [
                 { readPrivileges: { $in: [ user ] } },
@@ -47,33 +46,32 @@ export class PermissionController extends modepress.Controller {
             ]
         };
 
-        return new Promise( function( resolve, reject ) {
-
+        try {
             if ( !user ) {
                 res.setHeader( 'Content-Type', 'application/json' );
                 res.end( JSON.stringify( <modepress.IResponse>{
                     error: true,
                     message: 'Please login to make this call'
                 }) );
-                return resolve( false );
+                return false;
             }
 
-            that.checkProjectPrivilege( query, req, project ).then( function() {
-                if ( !suppressNext )
-                    next();
-                return resolve( true );
+            await this.checkProjectPrivilege( query, req, project );
+            if ( !suppressNext )
+                next();
 
-            }).catch( function( err: Error ) {
+            return true;
 
-                res.setHeader( 'Content-Type', 'application/json' );
-                res.end( JSON.stringify( <modepress.IResponse>{
-                    error: true,
-                    message: err.message
-                }) );
+        }
+        catch ( err ) {
+            res.setHeader( 'Content-Type', 'application/json' );
+            res.end( JSON.stringify( <modepress.IResponse>{
+                error: true,
+                message: err.message
+            }) );
 
-                return resolve( false );
-            });
-        });
+            return false;
+        }
     }
 
     /**
@@ -84,11 +82,10 @@ export class PermissionController extends modepress.Controller {
     * @returns {Promise<boolean>} Returns a promise of true or false if the user can write a project. If false, you
     * don't need to handle an response as the function does that for you.
     */
-    canWriteProject( req: modepress.IAuthReq, res: express.Response, next: Function ): Promise<boolean> {
+    async canWriteProject( req: modepress.IAuthReq, res: express.Response, next: Function ): Promise<boolean> {
         const suppressNext = req._suppressNext;
         const project = req.params.project;
         const user = ( req._user ? req._user.username : null );
-        const that = this;
         const query = {
             $or: [
                 { writePrivileges: { $in: [ req._user!.username ] } },
@@ -96,32 +93,32 @@ export class PermissionController extends modepress.Controller {
             ]
         };
 
-        return new Promise( function( resolve, reject ) {
-
+        try {
             if ( !user ) {
                 res.setHeader( 'Content-Type', 'application/json' );
                 res.end( JSON.stringify( <modepress.IResponse>{
                     error: true,
                     message: 'Please login to make this call'
-                }) );
-                return resolve( false );
+                }));
+                return false;
             }
 
-            that.checkProjectPrivilege( query, req, project ).then( function() {
-                if ( !suppressNext )
-                    next();
-                return resolve( true );
+            await this.checkProjectPrivilege( query, req, project );
+            if ( !suppressNext )
+                next();
 
-            }).catch( function( err: Error ) {
+            return true;
 
-                res.setHeader( 'Content-Type', 'application/json' );
-                res.end( JSON.stringify( <modepress.IResponse>{
-                    error: true,
-                    message: err.message
-                }) );
-                return resolve( false );
-            });
-        });
+        }
+        catch ( err ) {
+
+            res.setHeader( 'Content-Type', 'application/json' );
+            res.end( JSON.stringify( <modepress.IResponse>{
+                error: true,
+                message: err.message
+            }) );
+            return false;
+        }
     }
 
     /**
@@ -132,43 +129,42 @@ export class PermissionController extends modepress.Controller {
     * @returns {Promise<boolean>} Returns a promise of true or false if the user can admin a project. If false, you
     * don't need to handle an response as the function does that for you.
     */
-    canAdminProject( req: modepress.IAuthReq, res: express.Response, next: Function ): Promise<boolean> {
+    async canAdminProject( req: modepress.IAuthReq, res: express.Response, next: Function ): Promise<boolean> {
         const suppressNext = req._suppressNext;
         const project = req.params.project;
-        const that = this;
         const user = ( req._user ? req._user.username : null );
         const query = {
             adminPrivileges: { $in: [ req._user!.username ] }
         };
 
-        return new Promise( function( resolve, reject ) {
-
+        try {
             if ( !user ) {
                 res.setHeader( 'Content-Type', 'application/json' );
                 res.end( JSON.stringify( <modepress.IResponse>{
                     error: true,
                     message: 'Please login to make this call'
                 }) );
-                return resolve( false );
+
+                return false;
             }
 
-            that.checkProjectPrivilege( query, req, project ).then( function() {
+            await this.checkProjectPrivilege( query, req, project );
 
-                if ( !suppressNext )
-                    next();
-                return resolve( true );
+            if ( !suppressNext )
+                next();
 
-            }).catch( function( err: Error ) {
+            return true;
 
-                res.setHeader( 'Content-Type', 'application/json' );
-                res.end( JSON.stringify( <modepress.IResponse>{
-                    error: true,
-                    message: err.message
-                }) );
-                return resolve( false );
+        }
+        catch ( err ) {
 
-            });
-        });
+            res.setHeader( 'Content-Type', 'application/json' );
+            res.end( JSON.stringify( <modepress.IResponse>{
+                error: true,
+                message: err.message
+            }) );
+            return false;
+        }
     }
 
     /**
@@ -178,81 +174,63 @@ export class PermissionController extends modepress.Controller {
     * @param {Function} next
     * @param {string} p Specify the project instead of get it from the req.parameters
     */
-    checkProjectPrivilege( query: any, req: modepress.IAuthReq, p?: string ): Promise<boolean> {
+    async checkProjectPrivilege( query: any, req: modepress.IAuthReq, p?: string ): Promise<boolean> {
         const project: string = p || req.params.project;
         const user = req.params.user;
         const projectModel = this.getModel( 'en-projects' );
-        const that = this;
 
-        return new Promise( function( resolve, reject ) {
+        if ( !project )
+            throw new Error( `Project not specified` );
 
-            if ( !project )
-                return reject( new Error( `Project not specified` ) );
+        if ( !modepress.isValidID( project ) )
+            throw new Error( 'Please use a valid project ID' );
 
-            if ( !modepress.isValidID( project ) )
-                return reject( new Error( 'Please use a valid project ID' ) );
+        // If an admin - then the user can manage the project
+        if ( req._user!.privileges < 3 )
+            return true;
 
-            // If an admin - then the user can manage the project
-            if ( req._user!.privileges < 3 )
-                return resolve( true );
+        let count = await projectModel.count( <HatcheryServer.IProject>{ _id: new mongodb.ObjectID( project ), user: user });
+        if ( count === 0 )
+            throw new Error( 'No project exists with that ID' );
 
-            projectModel.count( <HatcheryServer.IProject>{ _id: new mongodb.ObjectID( project ), user: user }).then( function( count ) {
-                if ( count === 0 )
-                    throw new Error( 'No project exists with that ID' );
-
-                return projectModel.count( query )
-
-            }).then( function( count ) {
-                if ( count === 0 )
-                    throw new Error( 'User does not have permissions for project' );
-                else
-                    return resolve( true );
-
-            }).catch( function( err: Error ) {
-                return reject( err );
-            });
-        });
+        count = await projectModel.count( query );
+        if ( count === 0 )
+            throw new Error( 'User does not have permissions for project' );
+        else
+            return true;
     }
 
     /**
     * Checks if the logged in user has the allowance to create a new project
     * @param {IUserEntry} user
     */
-    projectsWithinLimits( user: UsersInterface.IUserEntry ): Promise<boolean> {
+    async projectsWithinLimits( user: UsersInterface.IUserEntry ): Promise<boolean> {
         // If an admin - then the user can create a new projec regardless
         if ( user.privileges < 3 )
-            return Promise.resolve( true );
-
-        const that = this;
+            return true;
 
         // Get the details
-        return new Promise<boolean>( function( resolve, reject ) {
-            const userModel = that.getModel( 'en-user-details' );
-            const projModel = that.getModel( 'en-projects' );
-            const username = user.username;
-            let maxProjects = 0;
+        const userModel = this.getModel( 'en-user-details' );
+        const projModel = this.getModel( 'en-projects' );
+        const username = user.username;
+        let maxProjects = 0;
 
-            userModel.findOne<HatcheryServer.IUserMeta>( <HatcheryServer.IUserMeta>{ user: username }).then( function( instance ): Promise<Error | number> {
-                if ( !instance )
-                    return Promise.reject<Error>( new Error( 'Not found' ) );
+        const instance = await userModel.findOne<HatcheryServer.IUserMeta>( <HatcheryServer.IUserMeta>{ user: username });
 
-                maxProjects = instance.dbEntry.maxProjects!;
+        if ( !instance )
+            throw new Error( 'Not found' );
 
-                // get number of projects
-                return projModel.count( <HatcheryServer.IProject>{ user: username });
+        maxProjects = instance.dbEntry.maxProjects!;
 
-            }).then( function( numProjects ) {
-                // TODO: Check if project is allowed certain plugins?
+        // get number of projects
+        const numProjects = await projModel.count( <HatcheryServer.IProject>{ user: username });
 
-                // If num projects + 1 more is less than max we are ok
-                if ( numProjects < maxProjects )
-                    return resolve( true );
-                else
-                    throw new Error( `You cannot create more projects on this plan. Please consider upgrading your account` );
+        // TODO: Check if project is allowed certain plugins?
 
-            }).catch( function( err: Error ) {
-                return reject( err );
-            });
-        });
+        // If num projects + 1 more is less than max we are ok
+        if ( numProjects < maxProjects )
+            return true;
+        else
+            throw new Error( `You cannot create more projects on this plan. Please consider upgrading your account` );
     }
 }

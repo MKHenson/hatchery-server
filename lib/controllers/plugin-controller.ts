@@ -30,26 +30,27 @@ export class PluginController extends EngineController {
     * @param {express.Response} res
     * @param {Function} next
     */
-    private remove( req: express.Request, res: express.Response, next: Function ) {
+    private async remove( req: express.Request, res: express.Response, next: Function ) {
         res.setHeader( 'Content-Type', 'application/json' );
         const plugins = this.getModel( 'en-plugins' );
 
-        plugins.deleteInstances( <HatcheryServer.IPlugin>{ _id: new mongodb.ObjectID( req.params.id ) }).then( function( numRemoved ) {
+        try {
+            const numRemoved = await plugins.deleteInstances( <HatcheryServer.IPlugin>{ _id: new mongodb.ObjectID( req.params.id ) });
             if ( numRemoved === 0 )
                 throw new Error( 'Could not find a plugin with that ID' );
 
             res.end( JSON.stringify( <modepress.IResponse>{
                 error: false,
                 message: 'Plugin has been successfully removed'
-            }) );
-
-        }).catch( function( error: Error ) {
+            }));
+        }
+        catch ( error ) {
             winston.error( error.message, { process: process.pid });
             res.end( JSON.stringify( <modepress.IResponse>{
                 error: true,
                 message: error.message
             }) );
-        });
+        }
     }
 
     /**
@@ -58,24 +59,25 @@ export class PluginController extends EngineController {
     * @param {express.Response} res
     * @param {Function} next
     */
-    private update( req: modepress.IAuthReq, res: express.Response, next: Function ) {
+    private async update( req: modepress.IAuthReq, res: express.Response, next: Function ) {
         res.setHeader( 'Content-Type', 'application/json' );
         const model = this.getModel( 'en-plugins' );
-        const that = this;
         const pluginToken = <HatcheryServer.IPlugin>req.body;
-        model.update<HatcheryServer.IPlugin>( <HatcheryServer.IPlugin>{ _id: new mongodb.ObjectID( req.params.id ) }, pluginToken ).then( function( data ) {
+
+        try {
+            const data = await model.update<HatcheryServer.IPlugin>( <HatcheryServer.IPlugin>{ _id: new mongodb.ObjectID( req.params.id ) }, pluginToken );
             res.end( JSON.stringify( <modepress.IResponse>{
                 error: false,
                 message: 'Plugin Updated'
             }) );
-
-        }).catch( function( error: Error ) {
+        }
+        catch ( error ) {
             winston.error( error.message, { process: process.pid });
             res.end( JSON.stringify( <modepress.IResponse>{
                 error: true,
                 message: error.message
-            }) );
-        });
+            }));
+        }
     }
 
     /**
@@ -84,33 +86,31 @@ export class PluginController extends EngineController {
     * @param {express.Response} res
     * @param {Function} next
     */
-    private create( req: modepress.IAuthReq, res: express.Response, next: Function ) {
+    private async create( req: modepress.IAuthReq, res: express.Response, next: Function ) {
         res.setHeader( 'Content-Type', 'application/json' );
         const model = this.getModel( 'en-plugins' );
-        const that = this;
         const pluginToken = <HatcheryServer.IPlugin>req.body;
 
         pluginToken.author = req._user!.username;
 
-        // Create the new plugin
-        model.createInstance<ModepressAddons.ICreatePlugin>( pluginToken ).then( function( instance ) {
-            return instance.schema.getAsJson( instance._id, { verbose: true });
-
-        }).then( function( json ) {
+        try {
+            // Create the new plugin
+            const instance = await model.createInstance<ModepressAddons.ICreatePlugin>( pluginToken );
+            const json = await instance.schema.getAsJson( instance._id, { verbose: true });
 
             res.end( JSON.stringify( <ModepressAddons.ICreatePlugin>{
                 error: false,
                 message: `Created new plugin '${pluginToken.name}'`,
                 data: json
-            }) );
-
-        }).catch( function( error: Error ) {
+            }));
+        }
+        catch ( error ) {
             winston.error( error.message, { process: process.pid });
             res.end( JSON.stringify( <modepress.IResponse>{
                 error: true,
                 message: error.message
             }) );
-        });
+        }
     }
 
     /**
@@ -119,11 +119,9 @@ export class PluginController extends EngineController {
     * @param {express.Response} res
     * @param {Function} next
     */
-    private getPlugins( req: modepress.IAuthReq, res: express.Response, next: Function ) {
+    private async getPlugins( req: modepress.IAuthReq, res: express.Response, next: Function ) {
         res.setHeader( 'Content-Type', 'application/json' );
         const model = this.getModel( 'en-plugins' );
-        const that = this;
-        let count = 0;
 
         const findToken: HatcheryServer.IPlugin = {};
 
@@ -133,7 +131,6 @@ export class PluginController extends EngineController {
         let getContent: boolean = true;
         if ( req.query.minimal )
             getContent = false;
-
 
         if ( req.params.id ) {
             if ( !modepress.isValidID( req.params.id ) )
@@ -146,25 +143,22 @@ export class PluginController extends EngineController {
         if ( req.query.search )
             ( <HatcheryServer.IPlugin>findToken ).name = <any>new RegExp( req.query.search, 'i' );
 
-        // First get the count
-        model.count( findToken ).then( function( num ) {
-            count = num;
-            return model.findInstances<HatcheryServer.IPlugin>( findToken, [], parseInt( req.query.index ), parseInt( req.query.limit ), ( getContent === false ? { html: 0 } : undefined ) );
+        try {
+            // First get the count
+            const count = await model.count( findToken );
+            const instances = await model.findInstances<HatcheryServer.IPlugin>( findToken, [], parseInt( req.query.index ), parseInt( req.query.limit ), ( getContent === false ? { html: 0 } : undefined ) );
 
-        }).then( function( instances ) {
             const sanitizedData: Promise<any>[] = [];
             for ( let i = 0, l = instances.length; i < l; i++ )
                 sanitizedData.push( instances[ i ].schema.getAsJson( instances[ i ]._id, { verbose: true }) );
 
-            return Promise.all( sanitizedData );
-
-        }).then( function( sanitizedData ) {
+            const pluginJsons = await Promise.all( sanitizedData );
 
             if ( findToken._id ) {
                 res.end( JSON.stringify( <ModepressAddons.IGetPlugin>{
                     error: false,
-                    message: sanitizedData.length > 0 ? `Found plugin` : `No plugin found`,
-                    data: sanitizedData.length > 0 ? sanitizedData[0] : undefined
+                    message: pluginJsons.length > 0 ? `Found plugin` : `No plugin found`,
+                    data: pluginJsons.length > 0 ? pluginJsons[0] : undefined
                 }) );
             }
             else {
@@ -172,16 +166,16 @@ export class PluginController extends EngineController {
                     error: false,
                     count: count,
                     message: `Found ${count} plugins`,
-                    data: sanitizedData
+                    data: pluginJsons
                 }) );
             }
-
-        }).catch( function( error: Error ) {
+        }
+        catch ( error ) {
             winston.error( error.message, { process: process.pid });
             res.end( JSON.stringify( <modepress.IResponse>{
                 error: true,
                 message: error.message
             }) );
-        });
+        }
     }
 }

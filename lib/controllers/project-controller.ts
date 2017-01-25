@@ -48,44 +48,46 @@ export class ProjectController extends EngineController {
     * @param {any} selector
     * @returns {Promise<IRemoveResponse>}
     */
-    removeByQuery( selector: any ): Promise<modepress.IRemoveResponse> {
+    async removeByQuery( selector: any ): Promise<modepress.IRemoveResponse> {
         const toRet: modepress.IRemoveResponse = { error: false, message: '0 items have been removed', itemsRemoved: [] };
         const model = this.getModel( 'en-projects' );
         const buildCtrl = BuildController.singleton;
         let numRemoved = 0;
+        let instances: modepress.ModelInstance<HatcheryServer.IProject>[];
 
-        return new Promise<modepress.IRemoveResponse>( function( resolve, reject ) {
-            model.findInstances<HatcheryServer.IProject>( selector ).then( function( instances ) {
-                if ( instances.length === 0 )
-                    return resolve( toRet );
+        try {
+            instances = await model.findInstances<HatcheryServer.IProject>( selector );
+            if ( instances.length === 0 )
+                return toRet;
+        }
+        catch ( err ) {
+            toRet.error = true;
+            toRet.message = `An error occurred when deleting projects by query : ${err.message}`
+            winston.error( toRet.message, { process: process.pid });
+            return toRet;
+        }
 
-                instances.forEach( function( val, index ) {
-                    buildCtrl.removeByProject( val._id, val.dbEntry.user! ).then( function( numDeleted ) {
-                        return model.deleteInstances( <HatcheryServer.IProject>{ _id: val._id });
+        for ( let i = 0, l = instances.length; i < l; i++ ) {
+            const project = instances[i];
+            try {
+                let numDeleted = await buildCtrl.removeByProject( project._id, project.dbEntry.user! );
+                numDeleted = await model.deleteInstances( <HatcheryServer.IProject>{ _id: project._id });
 
-                    }).then( function( numDeleted ) {
-                        numRemoved++;
-                        toRet.itemsRemoved.push( { id: val._id, error: false, errorMsg: '' });
-                        if ( index === instances.length - 1 ) {
-                            toRet.message = `${numRemoved} items have been removed`;
-                            return resolve( toRet );
-                        }
-
-                    }).catch( function( err: Error ) {
-                        toRet.itemsRemoved.push( { id: val._id, error: true, errorMsg: err.message });
-                        toRet.error = true;
-                        toRet.message = `An error occurred when deleting project ${val._id}`
-                        winston.error( toRet.message + ' : ' + err.message, { process: process.pid });
-                    });
-                });
-
-            }).catch( function( err: Error ) {
+                numRemoved++;
+                toRet.itemsRemoved.push( { id: project._id, error: false, errorMsg: '' });
+                if ( i === instances.length - 1 ) {
+                    toRet.message = `${numRemoved} items have been removed`;
+                }
+            }
+            catch ( err ) {
+                toRet.itemsRemoved.push( { id: project._id, error: true, errorMsg: err.message });
                 toRet.error = true;
-                toRet.message = `An error occurred when deleting projects by query : ${err.message}`
-                winston.error( toRet.message, { process: process.pid });
-                return resolve( toRet );
-            });
-        });
+                toRet.message = `An error occurred when deleting project ${project._id}`
+                winston.error( toRet.message + ' : ' + err.message, { process: process.pid });
+            }
+        }
+
+        return toRet;
     }
 
     /**
@@ -121,10 +123,9 @@ export class ProjectController extends EngineController {
     * @param {express.Response} res
     * @param {Function} next
     */
-    private updateProject( req: modepress.IAuthReq, res: express.Response, next: Function ) {
+    private async updateProject( req: modepress.IAuthReq, res: express.Response, next: Function ) {
         res.setHeader( 'Content-Type', 'application/json' );
         const model = this.getModel( 'en-projects' );
-        const that = this;
         const project: string = req.params.project;
         const updateToken: HatcheryServer.IProject = {};
         const token: HatcheryServer.IProject = req.body;
@@ -136,27 +137,24 @@ export class ProjectController extends EngineController {
         updateToken._id = new mongodb.ObjectID( project );
         updateToken.user = req._user!.username;
 
-        model.update( updateToken, token ).then( function( instance ) {
-            if ( instance.error ) {
-                winston.error( <string>instance.tokens[ 0 ].error, { process: process.pid });
-                return res.end( JSON.stringify( <modepress.IResponse>{
-                    error: true,
-                    message: <string>instance.tokens[ 0 ].error
-                }) );
-            }
+        try {
+            const instance = await model.update( updateToken, token );
+
+            if ( instance.error )
+                throw new Error(<string>instance.tokens[ 0 ].error);
 
             res.end( JSON.stringify( <modepress.IResponse>{
                 error: false,
                 message: `[${instance.tokens.length}] Projects updated`
-            }) );
-
-        }).catch( function( error: Error ) {
+            }));
+        }
+        catch ( error ) {
             winston.error( error.message, { process: process.pid });
             res.end( JSON.stringify( <modepress.IResponse>{
                 error: true,
                 message: error.message
             }) );
-        });
+        }
     }
 
     /**
@@ -165,8 +163,7 @@ export class ProjectController extends EngineController {
     * @param {express.Response} res
     * @param {Function} next
     */
-    remove( req: modepress.IAuthReq, res: express.Response, next: Function ) {
-        const that = this;
+    async remove( req: modepress.IAuthReq, res: express.Response, next: Function ) {
         const target = req.params.user;
         const projectIds = req.params.projects.split( ',' );
         const validityPromises: Array<Promise<boolean>> = [];
@@ -178,31 +175,31 @@ export class ProjectController extends EngineController {
             validityPromises.push( PermissionController.singleton.canAdminProject( req, res, next ) );
         }
 
-        // Check all the validity promises. If any one of them is false, then there is something wrong.
-        Promise.all( validityPromises ).then( function( validityArray ): Promise<modepress.IRemoveResponse | null> | null {
+        try {
+            // Check all the validity promises. If any one of them is false, then there is something wrong.
+            const validityArray = await Promise.all( validityPromises );
 
             for ( let i = 0, l = validityArray.length; i < l; i++ )
                 if ( !validityArray[ i ] )
                     return null;
 
-            return that.removeByIds( projectIds, target );
+            const response = await this.removeByIds( projectIds, target );
 
-        }).then( function( response ) {
             // No response - this means it was handled in the validity checks
             if ( !response )
                 return;
 
             res.setHeader( 'Content-Type', 'application/json' );
             res.end( JSON.stringify( <modepress.IRemoveResponse>response ) );
-
-        }).catch( function( error: Error ) {
+        }
+        catch ( error ) {
             winston.error( error.message, { process: process.pid });
             res.setHeader( 'Content-Type', 'application/json' );
             res.end( JSON.stringify( <modepress.IResponse>{
                 error: true,
                 message: error.message
             }) );
-        });
+        }
     }
 
     /**
@@ -211,7 +208,7 @@ export class ProjectController extends EngineController {
     * @param {express.Response} res
     * @param {Function} next
     */
-    createProject( req: modepress.IAuthReq, res: express.Response, next: Function ) {
+    async createProject( req: modepress.IAuthReq, res: express.Response, next: Function ) {
         // ✔ Check logged in + has rights to do request
         // ✔ Create a build
         // ✔ Sanitize details
@@ -223,9 +220,8 @@ export class ProjectController extends EngineController {
         const token: HatcheryServer.IProject = req.body;
         const projects = this.getModel( 'en-projects' );
         const buildCtrl = BuildController.singleton;
-        let newBuild: Modepress.ModelInstance<HatcheryServer.IBuild>;
+        let newBuild: Modepress.ModelInstance<HatcheryServer.IBuild> | null = null;
         let newProject: Modepress.ModelInstance<HatcheryServer.IProject>;
-        const that = this;
 
         // User is passed from the authentication function
         token.user = req._user!.username;
@@ -233,44 +229,39 @@ export class ProjectController extends EngineController {
         token.readPrivileges = [];
         token.writePrivileges = [];
 
-        // Create build
-        buildCtrl.createBuild( req._user!.username! ).then( function( build ) {
-            newBuild = build;
+        try {
+            // Create build
+            newBuild = await buildCtrl.createBuild( req._user!.username! );
             token.build = newBuild._id;
-            return projects.createInstance( token );
-
-        }).then( function( project ) {
-            newProject = project;
+            newProject = await projects.createInstance( token );
 
             // Link build with new project
-            return buildCtrl.linkProject( newBuild._id, newProject._id );
+            await buildCtrl.linkProject( newBuild._id, newProject._id );
 
-        }).then( function() {
-            // Make sure we're still in the limit
-            PermissionController.singleton.projectsWithinLimits( req._user! ).then( function() {
-                return newProject.schema.getAsJson( newProject._id, { verbose: true });
-
-            }).then( function( json ) {
+            try {
+                // Make sure we're still in the limit
+                await PermissionController.singleton.projectsWithinLimits( req._user! );
+                const json = await newProject.schema.getAsJson( newProject._id, { verbose: true });
 
                 // Finished
                 res.end( JSON.stringify( <ModepressAddons.ICreateProject>{
                     error: false,
                     message: `Created project '${token.name}'`,
                     data: json
-                }) );
-
-            }).catch( function( err: Error ) {
+                }));
+            }
+            catch ( err ) {
                 // Not in the limit - so remove the project and tell the user to upgrade
-                that.removeByIds( [ newProject._id ], req._user!.username! );
+                this.removeByIds( [ newProject._id ], req._user!.username! );
                 res.end( JSON.stringify( <modepress.IResponse>{ error: true, message: err.message }) );
-            });
-
-        }).catch( function( err: Error ) {
+            }
+        }
+        catch ( err ) {
             winston.error( err.message, { process: process.pid });
 
             // Make sure any builds were removed if an error occurred
             if ( newBuild ) {
-                buildCtrl.removeByIds( [ newBuild._id.toString() ], req._user!.username! ).then( function() {
+                buildCtrl.removeByIds( [ newBuild!._id.toString() ], req._user!.username! ).then( function() {
                     res.end( JSON.stringify( <modepress.IResponse>{ error: true, message: err.message }) );
 
                 }).catch( function( err: Error ) {
@@ -280,33 +271,29 @@ export class ProjectController extends EngineController {
             }
             else
                 res.end( JSON.stringify( <modepress.IResponse>{ error: true, message: err.message }) );
-        });
+        }
     }
 
-    getByQuery( query: any, req: modepress.IAuthReq, res: express.Response ) {
+    async getByQuery( query: any, req: modepress.IAuthReq, res: express.Response ) {
         const model = this.getModel( 'en-projects' );
-        const that = this;
-        let count = 0;
 
-        // First get the count
-        model.count( query ).then( function( num ) {
-            count = num;
-            return model.findInstances<HatcheryServer.IProject>( query, [], parseInt( req.query.index ), parseInt( req.query.limit ) );
+        try {
+            // First get the count
+            const count = await model.count( query );
+            const instances = await model.findInstances<HatcheryServer.IProject>( query, [], parseInt( req.query.index ), parseInt( req.query.limit ) );
 
-        }).then( function( instances ) {
+
             const sanitizedData: Promise<any>[] = [];
             for ( let i = 0, l = instances.length; i < l; i++ )
                 sanitizedData.push( instances[ i ].schema.getAsJson( instances[ i ]._id, { verbose: req._verbose }) );
 
-            return Promise.all( sanitizedData );
-
-        }).then( function( sanitizedData ) {
+            const jsonArray = await Promise.all( sanitizedData );
 
             if (query._id) {
                 res.end( JSON.stringify( <ModepressAddons.IGetProject>{
                     error: false,
-                    message: sanitizedData.length > 0 ? `Found project '${query._id}'` : 'No project found',
-                    data: sanitizedData.length > 0 ? sanitizedData[0] : undefined
+                    message: jsonArray.length > 0 ? `Found project '${query._id}'` : 'No project found',
+                    data: jsonArray.length > 0 ? jsonArray[0] : undefined
                 }) );
             }
             else {
@@ -314,18 +301,17 @@ export class ProjectController extends EngineController {
                     error: false,
                     count: count,
                     message: `Found ${count} projects`,
-                    data: sanitizedData
+                    data: jsonArray
                 }) );
             }
-
-
-        }).catch( function( error: Error ) {
+        }
+        catch ( error ) {
             winston.error( error.message, { process: process.pid });
             res.end( JSON.stringify( <modepress.IResponse>{
                 error: true,
                 message: error.message
             }) );
-        });
+        }
     }
 
     /**

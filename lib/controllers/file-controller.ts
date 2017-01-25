@@ -30,10 +30,9 @@ export class FileController extends EngineController {
     * @param {express.Response} res
     * @param {Function} next
     */
-    protected editFileDetails( req: modepress.IAuthReq, res: express.Response, next: Function ) {
+    protected async editFileDetails( req: modepress.IAuthReq, res: express.Response, next: Function ) {
         res.setHeader( 'Content-Type', 'application/json' );
         const model = this.getModel( 'en-files' );
-        const that = this;
 
         // Verify the resource ID
         if ( !modepress.isValidID( req.params.id ) )
@@ -42,24 +41,21 @@ export class FileController extends EngineController {
         const searchToken: HatcheryServer.IFile = { _id: new mongodb.ObjectID( req.params.id ) };
         const token: HatcheryServer.IResource = req.body;
 
-        model.update( searchToken, token ).then( function( instance ) {
-            if ( instance.error ) {
-                winston.error( <string>instance.tokens[ 0 ].error, { process: process.pid });
-                return res.end( JSON.stringify( <modepress.IResponse>{
-                    error: true,
-                    message: <string>instance.tokens[ 0 ].error
-                }) );
-            }
+        try {
+            const instance = await model.update( searchToken, token );
+
+            if ( instance.error )
+                throw new Error(<string>instance.tokens[ 0 ].error);
 
             res.end( JSON.stringify( <modepress.IResponse>{
                 error: false,
                 message: `[${instance.tokens.length}] Files updated`
             }) );
-
-        }).catch( function( error: Error ) {
+        }
+        catch ( error ) {
             winston.error( 'Could not update file details: ' + error.message, { process: process.pid });
             res.end( JSON.stringify( <modepress.IResponse>{ error: true, message: 'Could not update file details: ' + error.message }) );
-        });
+        };
     }
 
     /**
@@ -69,37 +65,25 @@ export class FileController extends EngineController {
     * @param {number} limit The limit
     * @param {number} verbose Weather or not to use verbose
     */
-    private getFiles( query: any, index: number, limit: number, verbose: boolean = true ): Promise<ModepressAddons.IGetFiles> {
+    private async getFiles( query: any, index: number, limit: number, verbose: boolean = true ): Promise<ModepressAddons.IGetFiles> {
         const model = this.getModel( 'en-files' );
-        const that = this;
-        let count = 0;
 
-        return new Promise<ModepressAddons.IGetFiles>( function( resolve, reject ) {
-            // First get the count
-            model.count( query ).then( function( num ) {
-                count = num;
-                return model.findInstances<HatcheryServer.IFile>( query, [], index, limit );
+        // First get the count
+        const count = await model.count( query );
+        const instances = await model.findInstances<HatcheryServer.IFile>( query, [], index, limit );
 
-            }).then( function( instances ) {
-                const sanitizedData: Array<HatcheryServer.IFile> = [];
-                for ( let i = 0, l = instances.length; i < l; i++ )
-                    sanitizedData.push( instances[ i ].schema.getAsJson( instances[ i ]._id, { verbose: verbose }) );
+        const sanitizedData: Array<HatcheryServer.IFile> = [];
+        for ( let i = 0, l = instances.length; i < l; i++ )
+            sanitizedData.push( instances[ i ].schema.getAsJson( instances[ i ]._id, { verbose: verbose }) );
 
-                return Promise.all( sanitizedData );
+        const files = await Promise.all( sanitizedData );
 
-            }).then( function( sanitizedData ) {
-
-                resolve( {
-                    error: false,
-                    count: count,
-                    message: `Found ${count} files`,
-                    data: sanitizedData
-                });
-
-            }).catch( function( error: Error ) {
-                reject( error );
-            });
-        });
+        return {
+            error: false,
+            count: count,
+            message: `Found ${count} files`,
+            data: files
+        } as ModepressAddons.IGetFiles;
     }
 
     /**
@@ -137,7 +121,7 @@ export class FileController extends EngineController {
     * @param {express.Response} res
     * @param {Function} next
     */
-    protected getByProject( req: modepress.IAuthReq, res: express.Response, next: Function ) {
+    protected async getByProject( req: modepress.IAuthReq, res: express.Response, next: Function ) {
         res.setHeader( 'Content-Type', 'application/json' );
 
         const project = req.params.project;
@@ -148,16 +132,17 @@ export class FileController extends EngineController {
         const query: HatcheryServer.IFile = { projectId: new mongodb.ObjectID( project ), user: req._user!.username, browsable: true };
         this.appendOptionalQueries( query, req.query );
 
-        this.getFiles( query, parseInt( req.query.index ), parseInt( req.query.limit ) ).then( function( data ) {
+        try {
+            const data = await this.getFiles( query, parseInt( req.query.index ), parseInt( req.query.limit ) );
             return res.end( JSON.stringify( data ) );
-
-        }).catch( function( err: Error ) {
+        }
+        catch ( err ) {
             winston.error( err.message, { process: process.pid });
             return res.end( JSON.stringify( <modepress.IResponse>{
                 error: true,
                 message: `An error occurred while fetching the files : ${err.message}`
-            }) );
-        });
+            }));
+        }
     }
 
     /**
@@ -166,34 +151,34 @@ export class FileController extends EngineController {
     * @param {express.Response} res
     * @param {Function} next
     */
-    protected getByUser( req: modepress.IAuthReq, res: express.Response, next: Function ) {
+    protected async getByUser( req: modepress.IAuthReq, res: express.Response, next: Function ) {
         res.setHeader( 'Content-Type', 'application/json' );
 
         // Create the query
         const query: HatcheryServer.IFile = { user: req._user!.username, browsable: true };
         this.appendOptionalQueries( query, req.query );
 
-        this.getFiles( query, parseInt( req.query.index ), parseInt( req.query.limit ) ).then( function( data ) {
+        try {
+            const data = await this.getFiles( query, parseInt( req.query.index ), parseInt( req.query.limit ) );
             return res.end( JSON.stringify( data ) );
-
-        }).catch( function( err: Error ) {
+        }
+        catch ( err ) {
             winston.error( err.message, { process: process.pid });
             return res.end( JSON.stringify( <modepress.IResponse>{
                 error: true,
                 message: `An error occurred while fetching the files : ${err.message}`
             }) );
-        });
+        }
     }
 
     /**
     * Called whenever a user has uploaded files
     * @param {UsersInterface.SocketTokens.IFileToken} token
     */
-    private onFilesUploaded( token: UsersInterface.SocketTokens.IFileToken ) {
+    private async onFilesUploaded( token: UsersInterface.SocketTokens.IFileToken ) {
         const model = this.getModel( 'en-files' );
         const file = token.file;
         const promises: Array<Promise<modepress.ModelInstance<HatcheryServer.IFile>>> = [];
-
 
         // Add an IFile reference for each file thats added
         // Check for file meta
@@ -211,27 +196,29 @@ export class FileController extends EngineController {
             browsable: ( fileMeta && fileMeta.browsable ? true : false )
         }) );
 
-        // Save it in the DB
-        Promise.all( promises ).then( function( instances ) {
+        try {
+            // Save it in the DB
+            const instances = await Promise.all( promises );
             winston.info( `[${instances.length}] Files have been added`, { process: process.pid });
-
-        }).catch( function( err: Error ) {
+        }
+        catch ( err ) {
             winston.error( `Could not add file instances : ${err.message}`, { process: process.pid });
-        });
+        }
     }
 
     /**
     * Called whenever a user has uploaded files
     * @param {UsersInterface.SocketTokens.IFileToken} token
     */
-    private onFilesRemoved( token: UsersInterface.SocketTokens.IFileToken ) {
+    private async onFilesRemoved( token: UsersInterface.SocketTokens.IFileToken ) {
         const model = this.getModel( 'en-files' );
 
-        model.deleteInstances( <HatcheryServer.IFile>{ identifier: token.file.identifier }).then( function( numRemoved: number ) {
+        try {
+            const numRemoved = await model.deleteInstances( <HatcheryServer.IFile>{ identifier: token.file.identifier });
             winston.info( `[${numRemoved}] Files have been removed`, { process: process.pid });
-
-        }).catch( function( err: Error ) {
+        }
+        catch ( err ) {
             winston.error( `Could not remove file instances : ${err.message}`, { process: process.pid });
-        });
+        }
     }
 }
