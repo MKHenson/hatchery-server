@@ -6,23 +6,25 @@ import { EngineController } from './engine-controller';
 import { ProjectModel } from '../models/project-model';
 import { PermissionController } from './permission-controller';
 
+export type ResourceType = 'assets' | 'groups' | 'containers' | 'scripts';
+
 /**
 * An abstract controller that deals with a general set of resources. This is usually sub-classed
 * to a higer level controller
 */
 export class ResourceController extends EngineController {
     private _model: modepress.Model;
-    protected _resourceType: string;
+    protected _resourceType: ResourceType;
 
 	/**
 	* Creates a new instance of the controller
-    * @param {string} resourceType The url to represent this resource
+    * @param {ResourceType} resourceType The url to represent this resource
     * @param {Model} model The model to associate with this resource
 	* @param {IServer} server The server configuration options
     * @param {IConfig} config The configuration options
     * @param {express.Express} e The express instance of this server
 	*/
-    constructor( resourceType: string, model: modepress.Model, server: modepress.IServer, config: modepress.IConfig, e: express.Express ) {
+    constructor( resourceType: ResourceType, model: modepress.Model, server: modepress.IServer, config: modepress.IConfig, e: express.Express ) {
         super( [ model, modepress.Model.registerModel( ProjectModel ) ], server, config, e );
 
         this._model = model;
@@ -64,6 +66,8 @@ export class ResourceController extends EngineController {
         newResource.projectId = new mongodb.ObjectID( project );
 
         try {
+            // Generate a shallow id for the model
+            newResource.shallowId = await model.count({ projectId: new mongodb.ObjectID( project ) } as HatcheryServer.IResource) + 1;
 
             // Save it in the DB
             const instance = await model.createInstance<HatcheryServer.IResource>( newResource );
